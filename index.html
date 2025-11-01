@@ -3,128 +3,325 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="The quiet home of Rafael Maestre López — software engineer and tinkerer.">
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <title>rfml</title>
+  <meta name="description" content="An immersive 3D portfolio gallery by Rafael Maestre López.">
+  <title>rfml — immersive portfolio</title>
   <style>
     :root {
-      color-scheme: dark light;
+      color-scheme: only light;
       font-size: 16px;
+      --bg: #f9f9f8;
+      --fg: #050505;
+      --muted: rgba(0, 0, 0, 0.55);
+      --shadow: rgba(0, 0, 0, 0.08);
     }
 
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
       box-sizing: border-box;
     }
 
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top, #ffffff 0%, #f6f6f4 55%, #f0f0ee 100%);
+      color: var(--fg);
+      font-family: "Times New Roman", "Computer Modern", "Garamond", serif;
+      letter-spacing: 0.01em;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #root {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .gallery-root {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .canvas-holder {
+      position: absolute;
+      inset: 0;
+    }
+
+    .gallery-overlay {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at top, #101010, #050505 55%, #000 100%);
-      color: rgba(245, 245, 245, 0.92);
-      font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(1.75rem, 4vw, 3rem);
+      mix-blend-mode: normal;
+    }
+
+    .gallery-brand {
+      font-size: clamp(1.35rem, 2vw, 2rem);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      pointer-events: auto;
+      align-self: flex-start;
+      padding: 0.3rem 0.8rem;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.55);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
+    }
+
+    .gallery-instructions {
+      pointer-events: auto;
+      align-self: flex-end;
+      max-width: clamp(16rem, 24vw, 22rem);
+      padding: 1.1rem 1.6rem;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.06);
+      font-size: 0.85rem;
+      line-height: 1.7;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    main {
-      text-align: center;
-      padding: 4rem clamp(2rem, 5vw, 6rem);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
-      backdrop-filter: blur(12px);
-      background: rgba(12, 12, 12, 0.65);
-      max-width: 28rem;
+    .gallery-instructions span {
+      display: block;
+      color: var(--muted);
     }
 
-    .mark {
-      display: inline-flex;
-      width: clamp(4rem, 10vw, 6rem);
-      height: clamp(4rem, 10vw, 6rem);
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+    .labels-layer {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      font-size: clamp(0.75rem, 1vw, 0.9rem);
+      letter-spacing: 0.08em;
+    }
+
+    .frame-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: var(--fg);
+      text-transform: uppercase;
+      padding: 0.35rem 0.75rem 0.6rem;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 999px;
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.09);
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      transition: opacity 320ms ease, transform 320ms ease;
+      white-space: nowrap;
+    }
+
+    .frame-label strong {
+      display: block;
+      font-weight: 500;
+    }
+
+    .frame-label span {
+      display: block;
+      font-size: 0.7em;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .frame-label.visible {
+      opacity: 1;
+      transform: translate(-50%, calc(-50% + 1.6rem));
+    }
+
+    .project-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-bottom: 2.5rem;
-      font-size: clamp(1.5rem, 3vw, 2rem);
-      color: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(32px);
+      background: rgba(248, 248, 248, 0.92);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 550ms cubic-bezier(0.77, 0, 0.18, 1);
+      padding: clamp(1.5rem, 4vw, 3rem);
+      gap: clamp(1rem, 3vw, 2.5rem);
     }
 
-    h1 {
-      font-size: clamp(1.75rem, 2.8vw, 2.2rem);
-      margin: 0 0 0.75rem;
-      letter-spacing: 0.32em;
+    .project-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    p {
-      margin: 0.5rem 0 2.25rem;
-      font-size: 0.85rem;
-      line-height: 1.7;
-      text-transform: none;
-      letter-spacing: 0.04em;
-      color: rgba(255, 255, 255, 0.62);
-    }
-
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: clamp(1.5rem, 4vw, 3rem);
-      font-size: 0.75rem;
-      letter-spacing: 0.22em;
-    }
-
-    a {
-      color: rgba(255, 255, 255, 0.68);
-      text-decoration: none;
+    .project-media {
       position: relative;
-      transition: color 200ms ease;
+      width: min(72vw, 1040px);
+      max-height: 68vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.12), 0 12px 30px rgba(0, 0, 0, 0.06);
+      background: #fff;
+      overflow: hidden;
     }
 
-    a::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      bottom: -0.4rem;
+    .project-media img,
+    .project-media video {
       width: 100%;
-      height: 1px;
-      background: currentColor;
-      transform: scaleX(0);
-      transform-origin: center;
-      transition: transform 200ms ease;
+      height: 100%;
+      object-fit: cover;
     }
 
-    a:hover,
-    a:focus-visible {
-      color: rgba(255, 255, 255, 0.92);
+    .project-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.4rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
     }
 
-    a:hover::after,
-    a:focus-visible::after {
-      transform: scaleX(1);
+    .project-meta h2 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      font-weight: 500;
     }
 
-    footer {
-      margin-top: 2.75rem;
-      font-size: 0.65rem;
-      letter-spacing: 0.35em;
-      color: rgba(255, 255, 255, 0.38);
+    .project-meta span {
+      font-size: clamp(0.7rem, 1vw, 0.85rem);
+      color: var(--muted);
     }
 
-    @media (max-width: 600px) {
-      body {
-        padding: 2.5rem 1.5rem;
+    .project-controls {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .project-arrow {
+      width: clamp(3.5rem, 6vw, 4.5rem);
+      height: clamp(3.5rem, 6vw, 4.5rem);
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 22px 40px rgba(0, 0, 0, 0.12);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--fg);
+      pointer-events: auto;
+      opacity: 0;
+      transition: opacity 320ms ease, transform 320ms ease;
+    }
+
+    .project-overlay.active .project-arrow {
+      opacity: 0.78;
+    }
+
+    .project-arrow:hover {
+      opacity: 1;
+      transform: scale(1.03);
+    }
+
+    .project-arrow.left {
+      margin-left: -2rem;
+    }
+
+    .project-arrow.right {
+      margin-right: -2rem;
+    }
+
+    .project-close {
+      position: absolute;
+      top: clamp(2rem, 5vw, 3rem);
+      right: clamp(2rem, 5vw, 3rem);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(18px);
+      padding: 0.55rem 0.9rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: opacity 260ms ease, transform 260ms ease;
+      opacity: 0;
+    }
+
+    .project-overlay.active .project-close {
+      opacity: 0.85;
+    }
+
+    .project-close:hover {
+      transform: translateY(-2px);
+      opacity: 1;
+    }
+
+    .status-indicator {
+      position: absolute;
+      bottom: clamp(1.5rem, 4vw, 2.5rem);
+      left: 50%;
+      transform: translateX(-50%);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      color: rgba(0, 0, 0, 0.42);
+      pointer-events: none;
+    }
+
+    @media (max-width: 900px) {
+      .gallery-overlay {
+        padding: 1.6rem;
       }
 
-      main {
-        padding: 3rem;
+      .gallery-brand {
+        font-size: 1.1rem;
+        letter-spacing: 0.18em;
       }
 
-      footer {
-        letter-spacing: 0.25em;
+      .gallery-instructions {
+        letter-spacing: 0.1em;
+        font-size: 0.75rem;
+      }
+
+      .project-media {
+        width: 92vw;
+      }
+
+      .project-arrow {
+        display: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      html, body {
+        font-size: 15px;
+      }
+
+      .gallery-instructions {
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .frame-label {
+        font-size: 0.7rem;
       }
     }
   </style>
@@ -135,15 +332,911 @@
   </script>
 </head>
 <body>
-  <main>
-    <span class="mark">rf</span>
-    <h1>rafael maestre lópez</h1>
-    <p>Engineer shaping thoughtful tooling and playful experiments. This space is intentionally quiet.</p>
-    <nav>
-      <a href="/in">LinkedIn</a>
-      <a href="/gh">GitHub</a>
-    </nav>
-    <footer>rfml.me</footer>
-  </main>
+  <div id="root"></div>
+  <script type="module">
+    import { useEffect, useRef, useState } from "https://cdn.jsdelivr.net/npm/react@18.2.0/+esm";
+    import { createRoot } from "https://cdn.jsdelivr.net/npm/react-dom@18.2.0/client/+esm";
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+    import { jsx, jsxs } from "https://cdn.jsdelivr.net/npm/react@18.2.0/jsx-runtime/+esm";
+
+    const PROJECTS = [
+      {
+        title: "Parametric Skyline",
+        date: "2024",
+        category: "3D Design",
+        image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Circuit Ballet",
+        date: "2023",
+        category: "Electronics",
+        image: "https://images.unsplash.com/photo-1527430253228-e93688616381?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Volatility Atlas",
+        date: "2022",
+        category: "Quant Finance",
+        image: "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Tactile Compiler",
+        date: "2024",
+        category: "Software",
+        image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Adaptive Control Field",
+        date: "2023",
+        category: "Control Systems",
+        image: "https://images.unsplash.com/photo-1482192597420-4817fdd7e8b0?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Automaton Chorus",
+        date: "2024",
+        category: "Automation",
+        image: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Nonlinear Poem",
+        date: "2022",
+        category: "Mathematics",
+        image: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Monochrome Atelier",
+        date: "2021",
+        category: "Fashion",
+        image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Silver Halide Study",
+        date: "2020",
+        category: "Photography",
+        image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Quiet Relief",
+        date: "2022",
+        category: "Charity",
+        image: "https://images.unsplash.com/photo-1495159659121-2e3f43d3ee1b?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Playfield 2049",
+        date: "2024",
+        category: "Videogames",
+        image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80"
+      },
+      {
+        title: "Flux Vignette",
+        date: "2023",
+        category: "Experimental",
+        image: "https://images.unsplash.com/photo-1533587851505-d119e13fa0d9?auto=format&fit=crop&w=1200&q=80"
+      }
+    ];
+
+    const cubicBezier = (t, p1x, p1y, p2x, p2y) => {
+      const cx = 3 * p1x;
+      const bx = 3 * (p2x - p1x) - cx;
+      const ax = 1 - cx - bx;
+      const cy = 3 * p1y;
+      const by = 3 * (p2y - p1y) - cy;
+      const ay = 1 - cy - by;
+
+      const sampleCurveX = (t) => ((ax * t + bx) * t + cx) * t;
+      const sampleCurveY = (t) => ((ay * t + by) * t + cy) * t;
+      const sampleDerivX = (t) => (3 * ax * t + 2 * bx) * t + cx;
+
+      let x = t;
+      for (let i = 0; i < 6; i++) {
+        const dx = sampleCurveX(x) - t;
+        if (Math.abs(dx) < 1e-4) break;
+        const d = sampleDerivX(x);
+        if (Math.abs(d) < 1e-6) break;
+        x -= dx / d;
+      }
+
+      let lo = 0;
+      let hi = 1;
+      while (sampleCurveX(x) - t > 1e-4) {
+        if (sampleCurveX(x) > t) {
+          hi = x;
+        } else {
+          lo = x;
+        }
+        x = 0.5 * (lo + hi);
+      }
+
+      return sampleCurveY(x);
+    };
+
+    const easeStandard = (t) => cubicBezier(t, 0.65, 0.05, 0.36, 1);
+    const easeDramatic = (t) => cubicBezier(t, 0.77, 0, 0.18, 1);
+
+    function GalleryExperience() {
+      const containerRef = useRef(null);
+      const labelsLayerRef = useRef(null);
+      const [activeIndex, setActiveIndex] = useState(null);
+      const [viewMode, setViewMode] = useState("gallery");
+      const [isSceneReady, setSceneReady] = useState(false);
+
+      const runtimeRef = useRef({
+        scene: null,
+        renderer: null,
+        camera: null,
+        clock: null,
+        frameItems: [],
+        hovered: null,
+        raycaster: new THREE.Raycaster(),
+        pointer: new THREE.Vector2(),
+        controls: {
+          yaw: 0,
+          pitch: -0.1,
+          targetYaw: 0,
+          targetPitch: -0.1,
+          dragging: false,
+          lastPointer: { x: 0, y: 0 }
+        },
+        keyboard: {
+          forward: false,
+          backward: false,
+          left: false,
+          right: false,
+          up: false,
+          down: false
+        },
+        transition: null,
+        labels: [],
+        projectPlane: new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
+        disposed: false,
+        requestId: null,
+        textureLoader: null,
+        loadQueue: [],
+        loadedCount: 0,
+        viewState: "gallery",
+        active: null,
+        audio: null,
+        ambienceStarted: false,
+        lastMoveMagnitude: 0,
+        readyNotified: false
+      });
+
+      useEffect(() => {
+        runtimeRef.current.viewState = viewMode;
+      }, [viewMode]);
+
+      useEffect(() => {
+        runtimeRef.current.active = activeIndex;
+      }, [activeIndex]);
+
+      useEffect(() => {
+        const container = containerRef.current;
+        const labelsLayer = labelsLayerRef.current;
+        if (!container || !labelsLayer) return;
+
+        const runtime = runtimeRef.current;
+        runtime.disposed = false;
+        runtime.readyNotified = false;
+        setSceneReady(false);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf7f7f5);
+
+        const fog = new THREE.Fog(0xf5f5f3, 18, 48);
+        scene.fog = fog;
+
+        const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 120);
+        camera.position.set(0.2, 2.2, 13.5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.domElement.style.touchAction = "none";
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.78);
+        scene.add(ambientLight);
+
+        const keyLight = new THREE.SpotLight(0xffffff, 1.1, 80, Math.PI / 5, 0.45, 1);
+        keyLight.position.set(-6, 12, 8);
+        keyLight.target.position.set(0, 1, 0);
+        scene.add(keyLight);
+        scene.add(keyLight.target);
+
+        const rimLight = new THREE.DirectionalLight(0xf8f8ff, 0.42);
+        rimLight.position.set(7, 6, -4);
+        scene.add(rimLight);
+
+        const floorGeometry = new THREE.PlaneGeometry(120, 120, 1, 1);
+        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xfdfdfc, roughness: 0.92, metalness: 0.04 });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -4;
+        floor.receiveShadow = false;
+        scene.add(floor);
+
+        const ceiling = floor.clone();
+        ceiling.position.y = 12;
+        ceiling.material = floor.material.clone();
+        scene.add(ceiling);
+
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xfafaf8, roughness: 0.85, metalness: 0.02 });
+        const wallGeometry = new THREE.PlaneGeometry(120, 48);
+        const northWall = new THREE.Mesh(wallGeometry, wallMaterial);
+        northWall.position.set(0, 4, -40);
+        const southWall = northWall.clone();
+        southWall.position.set(0, 4, 40);
+        southWall.rotation.y = Math.PI;
+        const eastWall = northWall.clone();
+        eastWall.position.set(40, 4, 0);
+        eastWall.rotation.y = -Math.PI / 2;
+        const westWall = northWall.clone();
+        westWall.position.set(-40, 4, 0);
+        westWall.rotation.y = Math.PI / 2;
+        scene.add(northWall, southWall, eastWall, westWall);
+
+        runtime.scene = scene;
+        runtime.renderer = renderer;
+        runtime.camera = camera;
+        runtime.clock = new THREE.Clock();
+        const galleryCenter = new THREE.Vector3(0, 1.6, 0);
+        const bounds = new THREE.Vector3(18, 5, 18);
+
+        camera.lookAt(galleryCenter);
+        const homeDirection = new THREE.Vector3().subVectors(galleryCenter, camera.position).normalize();
+        runtime.controls.yaw = Math.atan2(homeDirection.x, homeDirection.z);
+        runtime.controls.targetYaw = runtime.controls.yaw;
+        runtime.controls.pitch = Math.asin(homeDirection.y);
+        runtime.controls.targetPitch = runtime.controls.pitch;
+        runtime.homePosition = camera.position.clone();
+        runtime.homeQuaternion = camera.quaternion.clone();
+        runtime.homeYaw = runtime.controls.yaw;
+        runtime.homePitch = runtime.controls.pitch;
+
+        runtime.textureLoader = new THREE.TextureLoader();
+        runtime.textureLoader.setCrossOrigin("anonymous");
+        runtime.frameItems = [];
+        runtime.labels = Array.from(labelsLayer.querySelectorAll(".frame-label"));
+
+        const frameBackMaterial = new THREE.MeshPhysicalMaterial({
+          color: 0xfdfdfd,
+          roughness: 0.32,
+          metalness: 0.12,
+          clearcoat: 0.28,
+          clearcoatRoughness: 0.6
+        });
+
+        const frameInsetMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+        const frameGeometry = new THREE.BoxGeometry(1.8, 1.8, 0.12);
+        const mattingGeometry = new THREE.PlaneGeometry(1.66, 1.66);
+        const artworkGeometry = new THREE.PlaneGeometry(1.48, 1.48);
+
+        const createFrameGroup = (project, index) => {
+          const group = new THREE.Group();
+          const frameMesh = new THREE.Mesh(frameGeometry, frameBackMaterial.clone());
+          frameMesh.castShadow = false;
+          group.add(frameMesh);
+
+          const mattingMesh = new THREE.Mesh(mattingGeometry, frameInsetMaterial.clone());
+          mattingMesh.position.z = 0.065;
+          group.add(mattingMesh);
+
+          const artworkMaterial = new THREE.MeshBasicMaterial({ color: index % 2 === 0 ? 0x101010 : 0x0e0e0e });
+          const artworkMesh = new THREE.Mesh(artworkGeometry, artworkMaterial);
+          artworkMesh.position.z = 0.072;
+          artworkMesh.userData.isArtwork = true;
+          group.add(artworkMesh);
+
+          const theta = index * 0.82;
+          const radial = 9 + Math.sin(index * 0.37) * 2.2;
+          const y = (index % 6) * 0.8 - 1.6 + Math.sin(index * 1.1) * 0.6;
+          group.position.set(
+            Math.cos(theta) * radial,
+            y + Math.sin(theta * 0.6) * 1.4,
+            Math.sin(theta) * radial
+          );
+
+          const baseline = new THREE.Vector3().copy(group.position);
+          baseline.y = galleryCenter.y;
+          group.lookAt(new THREE.Vector3().lerpVectors(baseline, galleryCenter, 0.4));
+
+          const highlight = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.86, 1.86),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
+          );
+          highlight.position.z = 0.06;
+          group.add(highlight);
+
+          const velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.06,
+            (Math.random() - 0.5) * 0.02,
+            (Math.random() - 0.5) * 0.06
+          );
+
+          const rotationMomentum = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.08,
+            (Math.random() - 0.5) * 0.04,
+            (Math.random() - 0.5) * 0.08
+          );
+
+          scene.add(group);
+
+          return {
+            index,
+            project,
+            group,
+            frameMesh,
+            artworkMesh,
+            highlight,
+            velocity,
+            rotationMomentum,
+            baseQuaternion: group.quaternion.clone(),
+            loaded: false,
+            loading: false,
+            texture: null,
+            bounds
+          };
+        };
+
+        PROJECTS.forEach((project, index) => {
+          const item = createFrameGroup(project, index);
+          runtime.frameItems.push(item);
+        });
+
+        const loadCanvasTexture = (item) => {
+          if (item.loaded || item.loading) return;
+          item.loading = true;
+          runtime.textureLoader.load(
+            item.project.image,
+            (texture) => {
+              texture.colorSpace = THREE.SRGBColorSpace;
+              texture.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+              const material = new THREE.MeshBasicMaterial({ map: texture });
+              material.blending = THREE.NormalBlending;
+              material.transparent = false;
+              item.artworkMesh.material = material;
+              item.texture = texture;
+              item.loaded = true;
+              item.loading = false;
+              runtime.loadedCount += 1;
+              if (!runtimeRef.current.readyNotified && runtime.loadedCount >= Math.min(PROJECTS.length, 3)) {
+                runtimeRef.current.readyNotified = true;
+                setSceneReady(true);
+              }
+            },
+            undefined,
+            () => {
+              item.loading = false;
+            }
+          );
+        };
+
+        runtime.loadQueue = runtime.frameItems.slice(0, 4);
+        runtime.loadQueue.forEach(loadCanvasTexture);
+
+        const ensureAdjacentLoaded = (index) => {
+          if (typeof index !== "number") return;
+          const indices = [index, index - 1, index + 1].map((i) => (i + PROJECTS.length) % PROJECTS.length);
+          indices.forEach((idx) => {
+            const frame = runtime.frameItems[idx];
+            loadCanvasTexture(frame);
+          });
+        };
+
+        runtime.loadCanvasTexture = loadCanvasTexture;
+        runtime.ensureAdjacentLoaded = ensureAdjacentLoaded;
+
+        const startAmbience = () => {
+          if (runtime.ambienceStarted) return;
+          runtime.ambienceStarted = true;
+          const audio = new Audio("https://cdn.pixabay.com/audio/2022/02/17/audio_b96afeeb39.mp3");
+          audio.crossOrigin = "anonymous";
+          audio.loop = true;
+          audio.volume = 0.28;
+          audio.play().catch(() => {});
+          runtime.audio = audio;
+        };
+
+        const onPointerDown = (event) => {
+          startAmbience();
+          if (runtime.viewState !== "gallery") return;
+          runtime.controls.dragging = true;
+          runtime.controls.lastPointer.x = event.clientX;
+          runtime.controls.lastPointer.y = event.clientY;
+        };
+
+        const onPointerUp = (event) => {
+          if (runtime.controls.dragging && runtime.viewState === "gallery") {
+            const dragDistance = Math.hypot(
+              event.clientX - runtime.controls.lastPointer.x,
+              event.clientY - runtime.controls.lastPointer.y
+            );
+            runtime.lastMoveMagnitude = dragDistance;
+          }
+          runtime.controls.dragging = false;
+        };
+
+        const onPointerMove = (event) => {
+          const rect = renderer.domElement.getBoundingClientRect();
+          runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+          if (runtime.controls.dragging && runtime.viewState === "gallery") {
+            const dx = event.clientX - runtime.controls.lastPointer.x;
+            const dy = event.clientY - runtime.controls.lastPointer.y;
+            runtime.controls.targetYaw -= dx * 0.0022;
+            runtime.controls.targetPitch = THREE.MathUtils.clamp(
+              runtime.controls.targetPitch - dy * 0.0016,
+              -0.65,
+              0.45
+            );
+            runtime.controls.lastPointer.x = event.clientX;
+            runtime.controls.lastPointer.y = event.clientY;
+          }
+        };
+
+        const onClick = (event) => {
+          if (runtime.viewState !== "gallery") return;
+          if (runtime.lastMoveMagnitude > 5) {
+            runtime.lastMoveMagnitude = 0;
+            return;
+          }
+          if (runtime.hovered) {
+            event.preventDefault();
+            openFrame(runtime.hovered);
+          }
+          runtime.lastMoveMagnitude = 0;
+        };
+
+        const onWheel = (event) => {
+          event.preventDefault();
+          if (runtime.viewState === "gallery") {
+            const direction = new THREE.Vector3();
+            runtime.camera.getWorldDirection(direction);
+            const zoomIntensity = THREE.MathUtils.clamp(event.deltaY * 0.0012, -1.8, 1.8);
+            runtime.camera.position.addScaledVector(direction, zoomIntensity);
+            runtime.camera.position.y = THREE.MathUtils.clamp(runtime.camera.position.y, 0.8, 9);
+          } else if (runtime.viewState === "project" && Math.abs(event.deltaY) > 18) {
+            if (event.deltaY > 0) {
+              navigateProject(1);
+            } else {
+              navigateProject(-1);
+            }
+          }
+        };
+
+        const keyMap = {
+          KeyW: "forward",
+          KeyS: "backward",
+          KeyA: "left",
+          KeyD: "right",
+          KeyQ: "down",
+          KeyE: "up",
+          Space: "up",
+          ShiftLeft: "down"
+        };
+
+        const onKeyDown = (event) => {
+          if (event.code === "Escape" && runtime.viewState === "project") {
+            closeProject();
+            return;
+          }
+          if (runtime.viewState === "project") {
+            if (event.code === "ArrowRight") {
+              navigateProject(1);
+            } else if (event.code === "ArrowLeft") {
+              navigateProject(-1);
+            }
+          }
+          const key = keyMap[event.code];
+          if (key) {
+            runtime.keyboard[key] = true;
+            if (["forward", "backward", "left", "right"].includes(key)) {
+              event.preventDefault();
+            }
+          }
+        };
+
+        const onKeyUp = (event) => {
+          const key = keyMap[event.code];
+          if (key) {
+            runtime.keyboard[key] = false;
+          }
+        };
+
+        const onResize = () => {
+          const { clientWidth, clientHeight } = container;
+          renderer.setSize(clientWidth, clientHeight);
+          camera.aspect = clientWidth / clientHeight;
+          camera.updateProjectionMatrix();
+        };
+
+        renderer.domElement.addEventListener("pointerdown", onPointerDown);
+        renderer.domElement.addEventListener("pointerup", onPointerUp);
+        renderer.domElement.addEventListener("pointermove", onPointerMove);
+        renderer.domElement.addEventListener("click", onClick);
+        renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
+        window.addEventListener("resize", onResize);
+
+        const openFrame = (frameItem) => {
+          if (runtime.transition) return;
+          ensureAdjacentLoaded(frameItem.index);
+          const focusPoint = frameItem.group.getWorldPosition(new THREE.Vector3());
+          const frameForward = new THREE.Vector3(0, 0, 1).applyQuaternion(frameItem.group.quaternion).normalize();
+          const toPosition = focusPoint.clone().addScaledVector(frameForward, 2.6).add(new THREE.Vector3(0, 0.25, 0));
+          const toQuaternion = new THREE.Quaternion().setFromRotationMatrix(
+            new THREE.Matrix4().lookAt(toPosition, focusPoint, new THREE.Vector3(0, 1, 0))
+          );
+          runtime.transition = {
+            type: "enter",
+            start: performance.now(),
+            duration: 2200,
+            fromPosition: camera.position.clone(),
+            toPosition,
+            fromQuaternion: camera.quaternion.clone(),
+            toQuaternion,
+            focusFrame: frameItem
+          };
+          const planar = new THREE.Vector2(toPosition.x - focusPoint.x, toPosition.z - focusPoint.z);
+          runtime.controls.targetYaw = Math.atan2(planar.x, planar.y);
+          runtime.controls.targetPitch = Math.atan2(
+            toPosition.y - focusPoint.y,
+            Math.max(planar.length(), 1e-4)
+          );
+          runtime.controls.dragging = false;
+          runtime.viewState = "transitioning";
+          setViewMode("transitioning");
+          setActiveIndex(frameItem.index);
+        };
+
+        const closeProject = () => {
+          if (runtime.transition || runtime.viewState !== "project") return;
+          runtime.transition = {
+            type: "exit",
+            start: performance.now(),
+            duration: 1650,
+            fromPosition: camera.position.clone(),
+            toPosition: runtime.homePosition.clone(),
+            fromQuaternion: camera.quaternion.clone(),
+            toQuaternion: runtime.homeQuaternion.clone(),
+            focusFrame: runtime.frameItems[runtime.active ?? activeIndex ?? 0]
+          };
+          runtime.controls.targetYaw = runtime.homeYaw;
+          runtime.controls.targetPitch = runtime.homePitch;
+          runtime.viewState = "transitioning";
+          setViewMode("transitioning");
+        };
+
+        const navigateProject = (direction) => {
+          if (typeof runtime.active !== "number" || runtime.viewState !== "project") return;
+          const nextIndex = (runtime.active + direction + PROJECTS.length) % PROJECTS.length;
+          setActiveIndex(nextIndex);
+          ensureAdjacentLoaded(nextIndex);
+        };
+
+        runtime.internalClose = closeProject;
+        runtime.internalNavigate = navigateProject;
+
+        const animate = () => {
+          if (runtime.disposed) return;
+          runtime.requestId = requestAnimationFrame(animate);
+          const delta = Math.min(runtime.clock.getDelta(), 0.045);
+
+          runtime.controls.yaw = THREE.MathUtils.damp(runtime.controls.yaw, runtime.controls.targetYaw, 4, delta);
+          runtime.controls.pitch = THREE.MathUtils.damp(runtime.controls.pitch, runtime.controls.targetPitch, 4, delta);
+
+          const moveVector = new THREE.Vector3(
+            (runtime.keyboard.right ? 1 : 0) - (runtime.keyboard.left ? 1 : 0),
+            (runtime.keyboard.up ? 1 : 0) - (runtime.keyboard.down ? 1 : 0),
+            (runtime.keyboard.backward ? 1 : 0) - (runtime.keyboard.forward ? 1 : 0)
+          );
+
+          if (runtime.viewState === "gallery") {
+            const directionVector = new THREE.Vector3(
+              Math.sin(runtime.controls.yaw),
+              Math.tan(runtime.controls.pitch),
+              Math.cos(runtime.controls.yaw)
+            ).normalize();
+            const sideways = new THREE.Vector3().crossVectors(directionVector, new THREE.Vector3(0, 1, 0)).normalize();
+            const up = new THREE.Vector3(0, 1, 0);
+
+            const moveSpeed = 4.6;
+            if (moveVector.lengthSq() > 0) {
+              camera.position.addScaledVector(directionVector, -moveVector.z * moveSpeed * delta);
+              camera.position.addScaledVector(sideways, moveVector.x * moveSpeed * delta);
+              camera.position.addScaledVector(up, moveVector.y * moveSpeed * delta);
+            }
+
+            camera.position.y = THREE.MathUtils.clamp(camera.position.y, -1, 8);
+
+            const lookTarget = new THREE.Vector3(
+              camera.position.x + Math.sin(runtime.controls.yaw) * Math.cos(runtime.controls.pitch),
+              camera.position.y + Math.sin(runtime.controls.pitch),
+              camera.position.z + Math.cos(runtime.controls.yaw) * Math.cos(runtime.controls.pitch)
+            );
+            camera.lookAt(lookTarget);
+          }
+
+          runtime.hovered = null;
+          runtime.raycaster.setFromCamera(runtime.pointer, camera);
+          const intersects = runtime.raycaster.intersectObjects(
+            runtime.frameItems.map((item) => item.artworkMesh),
+            false
+          );
+          if (intersects.length > 0) {
+            const match = runtime.frameItems.find((item) => item.artworkMesh === intersects[0].object);
+            runtime.hovered = match || null;
+          }
+
+          runtime.frameItems.forEach((item, index) => {
+            const frame = item.group;
+            const isFocused = runtime.active === index && runtime.viewState !== "gallery";
+
+            if (!isFocused) {
+              const toCenter = new THREE.Vector3().subVectors(galleryCenter, frame.position).multiplyScalar(0.02);
+              item.velocity.addScaledVector(toCenter, delta);
+              item.velocity.y += Math.sin(performance.now() * 0.00025 + index) * 0.005 * delta;
+              item.velocity.multiplyScalar(0.98);
+              frame.position.addScaledVector(item.velocity, delta * 60);
+
+              if (Math.abs(frame.position.x) > item.bounds.x) {
+                frame.position.x = THREE.MathUtils.clamp(frame.position.x, -item.bounds.x, item.bounds.x);
+                item.velocity.x *= -0.6;
+              }
+              if (frame.position.y > item.bounds.y || frame.position.y < -item.bounds.y) {
+                frame.position.y = THREE.MathUtils.clamp(frame.position.y, -item.bounds.y, item.bounds.y);
+                item.velocity.y *= -0.6;
+              }
+              if (Math.abs(frame.position.z) > item.bounds.z) {
+                frame.position.z = THREE.MathUtils.clamp(frame.position.z, -item.bounds.z, item.bounds.z);
+                item.velocity.z *= -0.6;
+              }
+
+              const baseQuat = item.baseQuaternion.clone();
+              const driftQuat = new THREE.Quaternion().setFromEuler(
+                new THREE.Euler(
+                  Math.sin(performance.now() * 0.0004 + index) * 0.06,
+                  Math.cos(performance.now() * 0.00035 + index * 0.5) * 0.08,
+                  Math.sin(performance.now() * 0.0003 + index * 0.2) * 0.04
+                )
+              );
+
+              frame.quaternion.slerp(new THREE.Quaternion().multiplyQuaternions(baseQuat, driftQuat), 0.015);
+            }
+
+            const highlightTarget = runtime.hovered === item ? 0.32 : 0;
+            item.highlight.material.opacity = THREE.MathUtils.damp(
+              item.highlight.material.opacity,
+              highlightTarget,
+              4,
+              delta
+            );
+
+            if (!item.loaded) {
+              const distance = frame.position.distanceTo(camera.position);
+              if (distance < 18) {
+                loadCanvasTexture(item);
+              }
+            }
+          });
+
+          if (runtime.transition) {
+            const now = performance.now();
+            const t = THREE.MathUtils.clamp((now - runtime.transition.start) / runtime.transition.duration, 0, 1);
+            const eased = runtime.transition.type === "enter" ? easeDramatic(t) : easeStandard(t);
+
+            camera.position.lerpVectors(runtime.transition.fromPosition, runtime.transition.toPosition, eased);
+            camera.quaternion.slerp(runtime.transition.toQuaternion, eased);
+
+            if (t >= 1) {
+              if (runtime.transition.type === "enter") {
+                runtime.viewState = "project";
+                setViewMode("project");
+                runtime.active = runtime.transition.focusFrame.index;
+                runtime.controls.dragging = false;
+              } else {
+                runtime.viewState = "gallery";
+                setViewMode("gallery");
+                runtime.active = null;
+                setActiveIndex(null);
+                runtime.controls.yaw = runtime.homeYaw;
+                runtime.controls.pitch = runtime.homePitch;
+                runtime.controls.targetYaw = runtime.homeYaw;
+                runtime.controls.targetPitch = runtime.homePitch;
+                runtime.controls.dragging = false;
+              }
+              runtime.transition = null;
+            }
+          }
+
+          const updateLabels = () => {
+            const { clientWidth, clientHeight } = renderer.domElement;
+            runtime.frameItems.forEach((item, idx) => {
+              const el = runtime.labels[idx];
+              if (!el) return;
+              if (runtime.viewState !== "gallery" && runtime.active === idx) {
+                el.style.opacity = "0";
+                return;
+              }
+              const vector = item.group.getWorldPosition(new THREE.Vector3());
+              vector.project(camera);
+              const isVisible = vector.z < 1 && vector.z > -1;
+              if (!isVisible) {
+                el.classList.remove("visible");
+                return;
+              }
+              const x = (vector.x * 0.5 + 0.5) * clientWidth;
+              const y = (-vector.y * 0.5 + 0.5) * clientHeight;
+              el.style.transform = `translate(${x}px, ${y}px)`;
+              if (runtime.viewState === "gallery") {
+                el.classList.add("visible");
+              } else {
+                el.classList.remove("visible");
+              }
+            });
+          };
+
+          updateLabels();
+          renderer.render(scene, camera);
+        };
+
+        animate();
+
+        return () => {
+          runtime.disposed = true;
+          cancelAnimationFrame(runtime.requestId);
+          renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+          renderer.domElement.removeEventListener("pointerup", onPointerUp);
+          renderer.domElement.removeEventListener("pointermove", onPointerMove);
+          renderer.domElement.removeEventListener("click", onClick);
+          renderer.domElement.removeEventListener("wheel", onWheel);
+          window.removeEventListener("keydown", onKeyDown);
+          window.removeEventListener("keyup", onKeyUp);
+          window.removeEventListener("resize", onResize);
+
+          runtime.frameItems.forEach((item) => {
+            if (item.texture) {
+              item.texture.dispose();
+            }
+            item.group.traverse((child) => {
+              if (child.isMesh) {
+                child.geometry.dispose();
+                if (child.material?.dispose) {
+                  child.material.dispose();
+                }
+              }
+            });
+            scene.remove(item.group);
+          });
+          renderer.dispose();
+          container.removeChild(renderer.domElement);
+          runtime.audio?.pause();
+          runtime.audio = null;
+        };
+      }, []);
+
+      useEffect(() => {
+        const runtime = runtimeRef.current;
+        if (typeof activeIndex === "number") {
+          runtime.active = activeIndex;
+          runtime.frameItems[activeIndex] && runtime.frameItems[activeIndex].highlight && (runtime.frameItems[activeIndex].highlight.material.opacity = 0);
+          runtime.internalActivateIndex = activeIndex;
+        }
+      }, [activeIndex]);
+
+      useEffect(() => {
+        if (viewMode === "project" && typeof activeIndex === "number") {
+          runtimeRef.current.ensureAdjacentLoaded?.(activeIndex);
+        }
+      }, [viewMode, activeIndex]);
+
+      const closeProject = () => {
+        runtimeRef.current.internalClose?.();
+      };
+
+      const navigateProject = (direction) => {
+        runtimeRef.current.internalNavigate?.(direction);
+      };
+
+      return jsxs("div", {
+        className: "gallery-root",
+        children: [
+          jsx("div", { className: "canvas-holder", ref: containerRef }),
+          jsxs("div", {
+            className: "gallery-overlay",
+            children: [
+              jsx("div", { className: "gallery-brand", children: "rfml" }),
+              jsxs("div", {
+                className: "labels-layer",
+                ref: labelsLayerRef,
+                children: PROJECTS.map((project) =>
+                  jsxs("div", {
+                    className: "frame-label",
+                    children: [
+                      jsx("strong", { children: project.title }),
+                      jsx("span", { children: project.date })
+                    ]
+                  }, `label-${project.title}`)
+                )
+              }),
+              jsxs("div", {
+                className: "gallery-instructions",
+                children: [
+                  jsx("span", { children: "Click a frame to enter" }),
+                  jsx("span", { children: "Mouse drag to orbit" }),
+                  jsx("span", { children: "Scroll / WASD to explore" }),
+                  jsx("span", { children: "ESC to return" })
+                ]
+              })
+            ]
+          }),
+          jsxs("div", {
+            className: "project-overlay" + (viewMode === "project" ? " active" : ""),
+            children: typeof activeIndex === "number"
+              ? [
+                  jsx("button", {
+                    className: "project-close",
+                    onClick: closeProject,
+                    children: "Return"
+                  }, "close"),
+                  jsxs("div", {
+                    className: "project-media",
+                    children: [
+                      jsxs("div", {
+                        className: "project-controls",
+                        children: [
+                          jsx("button", {
+                            className: "project-arrow left",
+                            onClick: () => navigateProject(-1),
+                            children: "Prev"
+                          }, "prev"),
+                          jsx("button", {
+                            className: "project-arrow right",
+                            onClick: () => navigateProject(1),
+                            children: "Next"
+                          }, "next")
+                        ]
+                      }),
+                      jsx("img", {
+                        src: PROJECTS[activeIndex].image,
+                        alt: PROJECTS[activeIndex].title,
+                        loading: "lazy"
+                      })
+                    ]
+                  }, "media"),
+                  jsxs("div", {
+                    className: "project-meta",
+                    children: [
+                      jsx("h2", { children: PROJECTS[activeIndex].title }),
+                      jsx("span", {
+                        children: PROJECTS[activeIndex].date +
+                          (PROJECTS[activeIndex].category ? ` — ${PROJECTS[activeIndex].category}` : "")
+                      })
+                    ]
+                  }, "meta")
+                ]
+              : null
+          }),
+          jsx("div", {
+            className: "status-indicator",
+            children: viewMode === "gallery" ? "Gallery Navigation" : "Project View"
+          }),
+          !isSceneReady
+            ? jsx("div", {
+                className: "status-indicator",
+                style: { bottom: "auto", top: "50%", transform: "translate(-50%, -50%)" },
+                children: "Calibrating gallery…"
+              }, "loading-indicator")
+            : null
+        ]
+      });
+    }
+
+    const root = createRoot(document.getElementById("root"));
+    root.render(jsx(GalleryExperience, {}));
+  </script>
 </body>
 </html>
