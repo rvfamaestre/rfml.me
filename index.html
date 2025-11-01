@@ -504,7 +504,8 @@
         ambienceStarted: false,
         lastMoveMagnitude: 0,
         readyNotified: false,
-        homeLookTarget: null
+        homeLookTarget: null,
+        orientationFlip: null
       });
 
       useEffect(() => {
@@ -602,6 +603,7 @@
         runtime.homeYaw = runtime.controls.yaw;
         runtime.homePitch = runtime.controls.pitch;
         runtime.homeLookTarget = initialLookTarget.clone();
+        runtime.orientationFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 
         runtime.textureLoader = new THREE.TextureLoader();
         runtime.textureLoader.setCrossOrigin("anonymous");
@@ -650,6 +652,7 @@
 
           const initialFocus = new THREE.Vector3(0, galleryCenter.y, 0);
           group.lookAt(initialFocus);
+          group.rotateY(Math.PI);
 
           const highlight = new THREE.Mesh(
             new THREE.PlaneGeometry(1.86, 1.86),
@@ -981,6 +984,7 @@
             runtime.hovered = match || null;
           }
 
+          const orientationFlip = runtime.orientationFlip || new THREE.Quaternion();
           runtime.frameItems.forEach((item, index) => {
             const frame = item.group;
             const orbit = item.orbit;
@@ -1007,14 +1011,11 @@
                 const y = orbit.heightBase + Math.sin(orbitTime * orbit.bobFrequency + orbit.phase) * orbit.bobAmplitude;
                 frame.position.set(x, y, z);
 
-                const lookTarget = new THREE.Vector3(
-                  0,
-                  galleryCenter.y + Math.sin(orbitTime * 0.18 + orbit.phase) * 0.25,
-                  0
-                );
+                const lookTarget = new THREE.Vector3(0, galleryCenter.y + Math.sin(orbitTime * 0.18 + orbit.phase) * 0.25, 0);
                 const baseQuat = new THREE.Quaternion().setFromRotationMatrix(
                   new THREE.Matrix4().lookAt(frame.position.clone(), lookTarget, new THREE.Vector3(0, 1, 0))
                 );
+                const facingQuat = baseQuat.multiply(runtime.orientationFlip);
                 const driftQuat = new THREE.Quaternion().setFromEuler(
                   new THREE.Euler(
                     Math.sin(orbitTime * 0.6 + orbit.phase) * 0.04,
@@ -1022,7 +1023,7 @@
                     Math.sin(orbitTime * 0.4 + orbit.phase) * 0.02
                   )
                 );
-                const finalQuat = baseQuat.clone().multiply(driftQuat);
+                const finalQuat = facingQuat.clone().multiply(driftQuat);
                 frame.quaternion.slerp(finalQuat, 0.08);
               }
             }
