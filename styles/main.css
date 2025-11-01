@@ -48,41 +48,6 @@ canvas {
   inset: 0;
 }
 
-.crosshair {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.28);
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 8px 24px rgba(0, 0, 0, 0.12);
-  pointer-events: none;
-  transform: translate(-50%, -50%) scale(0.88);
-  opacity: 0;
-  transition: opacity 240ms ease, transform 240ms ease;
-  mix-blend-mode: multiply;
-  z-index: 8;
-}
-
-.crosshair::after {
-  content: "";
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.75);
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.crosshair.active {
-  opacity: 0.75;
-  transform: translate(-50%, -50%) scale(1);
-}
-
 .gallery-overlay {
   pointer-events: none;
   position: absolute;

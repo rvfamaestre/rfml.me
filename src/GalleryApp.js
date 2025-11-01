@@ -9,7 +9,6 @@ export default function GalleryApp({ projects = [] }) {
   const [activeIndex, setActiveIndex] = useState(null);
   const [viewMode, setViewMode] = useState("gallery");
   const [isSceneReady, setSceneReady] = useState(false);
-  const [pointerLocked, setPointerLocked] = useState(false);
 
   const runtimeRef = useRef({
     scene: null,
@@ -28,14 +27,6 @@ export default function GalleryApp({ projects = [] }) {
       dragging: false,
       lastPointer: { x: 0, y: 0 }
     },
-    keyboard: {
-      forward: false,
-      backward: false,
-      left: false,
-      right: false,
-      up: false,
-      down: false
-    },
     transition: null,
     labels: [],
     projectPlane: new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
@@ -50,11 +41,7 @@ export default function GalleryApp({ projects = [] }) {
     ambienceStarted: false,
     readyNotified: false,
     homeLookTarget: null,
-    orientationFlip: null,
-    pointerLocked: false,
-    pointerLockSuppressClick: false,
-    pointerLockReleaseReason: null,
-    supportsPointerLock: true
+    orientationFlip: null
   });
 
   useEffect(() => {
@@ -138,7 +125,6 @@ export default function GalleryApp({ projects = [] }) {
     runtime.renderer = renderer;
     runtime.camera = camera;
     runtime.clock = new THREE.Clock();
-    runtime.supportsPointerLock = typeof renderer.domElement.requestPointerLock === "function";
     const galleryCenter = new THREE.Vector3(0, 1.6, 0);
 
     camera.lookAt(initialLookTarget);
@@ -323,104 +309,28 @@ export default function GalleryApp({ projects = [] }) {
       }
     };
 
-    const requestImmersiveMode = () => {
-      runtime.pointerLockReleaseReason = null;
-      if (runtime.supportsPointerLock && renderer.domElement.requestPointerLock) {
-        if (document.pointerLockElement !== renderer.domElement) {
-          renderer.domElement.requestPointerLock();
-          runtime.pointerLockSuppressClick = true;
-        }
-      } else {
-        runtime.pointerLocked = false;
-        runtime.pointerLockSuppressClick = false;
-      }
-      if (!document.fullscreenElement && container.requestFullscreen) {
-        container.requestFullscreen().catch(() => {});
-      }
-    };
-
     const onPointerDown = (event) => {
       if (event.button !== 0) return;
-      event.preventDefault();
       startAmbience();
-      if (runtime.viewState !== "gallery") return;
-      if (runtime.supportsPointerLock) {
-        if (!runtime.pointerLocked) {
-          requestImmersiveMode();
-        }
-      } else {
-        runtime.controls.dragging = true;
-        runtime.controls.lastPointer.x = event.clientX;
-        runtime.controls.lastPointer.y = event.clientY;
-        const rect = renderer.domElement.getBoundingClientRect();
-        runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-        renderer.domElement.style.cursor = "grabbing";
-        if (renderer.domElement.setPointerCapture) {
-          try {
-            renderer.domElement.setPointerCapture(event.pointerId);
-          } catch (err) {
-            /* noop */
-          }
-        }
-      }
+      const rect = renderer.domElement.getBoundingClientRect();
+      runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     };
 
     const onPointerUp = (event) => {
       if (event.button !== 0) return;
-      if (!runtime.supportsPointerLock) {
-        runtime.controls.dragging = false;
-        if (runtime.viewState === "gallery") {
-          renderer.domElement.style.cursor = "crosshair";
-        }
-        if (renderer.domElement.releasePointerCapture) {
-          try {
-            renderer.domElement.releasePointerCapture(event.pointerId);
-          } catch (err) {
-            /* noop */
-          }
-        }
-      }
-      if (runtime.pointerLocked) return;
       const rect = renderer.domElement.getBoundingClientRect();
       runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     };
 
     const onPointerMove = (event) => {
-      if (runtime.pointerLocked && runtime.viewState === "gallery") {
-        const sensitivity = 0.0018;
-        runtime.controls.targetYaw -= event.movementX * sensitivity;
-        runtime.controls.targetPitch = THREE.MathUtils.clamp(
-          runtime.controls.targetPitch - event.movementY * sensitivity,
-          -0.75,
-          0.6
-        );
-        runtime.pointer.set(0, 0);
-      } else {
-        const rect = renderer.domElement.getBoundingClientRect();
-        runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-        if (!runtime.supportsPointerLock && runtime.controls.dragging && runtime.viewState === "gallery") {
-          const dx = event.clientX - runtime.controls.lastPointer.x;
-          const dy = event.clientY - runtime.controls.lastPointer.y;
-          runtime.controls.targetYaw -= dx * 0.0022;
-          runtime.controls.targetPitch = THREE.MathUtils.clamp(
-            runtime.controls.targetPitch - dy * 0.0016,
-            -0.65,
-            0.45
-          );
-          runtime.controls.lastPointer.x = event.clientX;
-          runtime.controls.lastPointer.y = event.clientY;
-        }
-      }
+      const rect = renderer.domElement.getBoundingClientRect();
+      runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     };
 
     const onClick = (event) => {
-      if (runtime.pointerLockSuppressClick) {
-        runtime.pointerLockSuppressClick = false;
-        return;
-      }
       if (runtime.viewState !== "gallery") return;
       if (runtime.hovered) {
         event.preventDefault();
@@ -445,27 +355,13 @@ export default function GalleryApp({ projects = [] }) {
       }
     };
 
-    const keyMap = {
-      KeyW: "forward",
-      KeyS: "backward",
-      KeyA: "left",
-      KeyD: "right",
-      KeyQ: "down",
-      KeyE: "up",
-      Space: "up",
-      ShiftLeft: "down",
-      ShiftRight: "down"
-    };
-
     const onKeyDown = (event) => {
-      if (event.code === "Escape" && runtime.viewState === "project") {
-        closeProject();
-        return;
-      }
-      if (event.code === "Escape" && runtime.pointerLocked) {
-        runtime.pointerLockReleaseReason = "escape";
-        document.exitPointerLock();
-        exitFullscreen();
+      if (event.code === "Escape") {
+        if (runtime.viewState === "project") {
+          closeProject();
+        } else {
+          exitFullscreen();
+        }
         return;
       }
       if (runtime.viewState === "project") {
@@ -474,20 +370,6 @@ export default function GalleryApp({ projects = [] }) {
         } else if (event.code === "ArrowLeft") {
           navigateProject(-1);
         }
-      }
-      const key = keyMap[event.code];
-      if (key) {
-        runtime.keyboard[key] = true;
-        if (["forward", "backward", "left", "right"].includes(key)) {
-          event.preventDefault();
-        }
-      }
-    };
-
-    const onKeyUp = (event) => {
-      const key = keyMap[event.code];
-      if (key) {
-        runtime.keyboard[key] = false;
       }
     };
 
@@ -505,49 +387,11 @@ export default function GalleryApp({ projects = [] }) {
     renderer.domElement.addEventListener("click", onClick);
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
     window.addEventListener("resize", onResize);
-
-    const onPointerLockChange = () => {
-      const locked = document.pointerLockElement === renderer.domElement;
-      runtime.pointerLocked = locked;
-      const releaseReason = runtime.pointerLockReleaseReason;
-      runtime.pointerLockReleaseReason = null;
-      setPointerLocked(locked);
-      if (locked) {
-        runtime.pointer.set(0, 0);
-        renderer.domElement.style.cursor = "none";
-      } else {
-        runtime.pointerLockSuppressClick = false;
-        renderer.domElement.style.cursor = releaseReason === "project"
-          ? "default"
-          : (runtime.viewState === "gallery" ? "crosshair" : "default");
-        runtime.pointer.set(0, 0);
-        if (releaseReason !== "project") {
-          exitFullscreen();
-        }
-      }
-    };
-
-    const onPointerLockError = () => {
-      runtime.pointerLocked = false;
-      runtime.pointerLockReleaseReason = null;
-      runtime.pointerLockSuppressClick = false;
-      setPointerLocked(false);
-      renderer.domElement.style.cursor = runtime.viewState === "gallery" ? "crosshair" : "default";
-      exitFullscreen();
-    };
-
-    document.addEventListener("pointerlockchange", onPointerLockChange);
-    document.addEventListener("pointerlockerror", onPointerLockError);
 
     const openFrame = (frameItem) => {
       if (runtime.transition) return;
-      if (document.pointerLockElement === renderer.domElement) {
-        runtime.pointerLockReleaseReason = "project";
-        document.exitPointerLock();
-      }
-      runtime.controls.dragging = false;
+      exitFullscreen();
       ensureAdjacentLoaded(frameItem.index);
       const focusPoint = frameItem.group.getWorldPosition(new THREE.Vector3());
       const frameForward = new THREE.Vector3(0, 0, 1).applyQuaternion(frameItem.group.quaternion).normalize();
@@ -613,11 +457,7 @@ export default function GalleryApp({ projects = [] }) {
       runtime.controls.yaw = THREE.MathUtils.damp(runtime.controls.yaw, runtime.controls.targetYaw, 4, delta);
       runtime.controls.pitch = THREE.MathUtils.damp(runtime.controls.pitch, runtime.controls.targetPitch, 4, delta);
 
-      const moveVector = new THREE.Vector3(
-        (runtime.keyboard.right ? 1 : 0) - (runtime.keyboard.left ? 1 : 0),
-        (runtime.keyboard.up ? 1 : 0) - (runtime.keyboard.down ? 1 : 0),
-        (runtime.keyboard.backward ? 1 : 0) - (runtime.keyboard.forward ? 1 : 0)
-      );
+      const moveVector = new THREE.Vector3(0, 0, 0);
 
       if (runtime.viewState === "gallery") {
         const directionVector = new THREE.Vector3(
@@ -627,13 +467,6 @@ export default function GalleryApp({ projects = [] }) {
         ).normalize();
         const sideways = new THREE.Vector3().crossVectors(directionVector, new THREE.Vector3(0, 1, 0)).normalize();
         const up = new THREE.Vector3(0, 1, 0);
-
-        const moveSpeed = 4.6;
-        if (moveVector.lengthSq() > 0) {
-          camera.position.addScaledVector(directionVector, -moveVector.z * moveSpeed * delta);
-          camera.position.addScaledVector(sideways, moveVector.x * moveSpeed * delta);
-          camera.position.addScaledVector(up, moveVector.y * moveSpeed * delta);
-        }
 
         camera.position.y = THREE.MathUtils.clamp(camera.position.y, -1, 8);
 
@@ -646,9 +479,6 @@ export default function GalleryApp({ projects = [] }) {
       }
 
       runtime.hovered = null;
-      if (runtime.pointerLocked) {
-        runtime.pointer.set(0, 0);
-      }
       runtime.raycaster.setFromCamera(runtime.pointer, camera);
       const intersects = runtime.raycaster.intersectObjects(
         runtime.frameItems.map((item) => item.artworkMesh),
@@ -792,10 +622,7 @@ export default function GalleryApp({ projects = [] }) {
       renderer.domElement.removeEventListener("click", onClick);
       renderer.domElement.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("resize", onResize);
-      document.removeEventListener("pointerlockchange", onPointerLockChange);
-      document.removeEventListener("pointerlockerror", onPointerLockError);
 
       runtime.frameItems.forEach((item) => {
         if (item.texture) {
@@ -838,12 +665,8 @@ export default function GalleryApp({ projects = [] }) {
   useEffect(() => {
     const dom = runtimeRef.current.renderer?.domElement;
     if (!dom) return;
-    if (pointerLocked) {
-      dom.style.cursor = "none";
-    } else {
-      dom.style.cursor = viewMode === "gallery" ? "crosshair" : "default";
-    }
-  }, [viewMode, pointerLocked]);
+    dom.style.cursor = viewMode === "gallery" ? "crosshair" : "default";
+  }, [viewMode]);
 
   const closeProject = () => {
     runtimeRef.current.internalClose?.();
@@ -857,7 +680,6 @@ export default function GalleryApp({ projects = [] }) {
     className: "gallery-root",
     children: [
       jsx("div", { className: "canvas-holder", ref: containerRef }),
-      jsx("div", { className: pointerLocked ? "crosshair active" : "crosshair", "aria-hidden": "true" }),
       jsxs("div", {
         className: "gallery-overlay",
         children: [
@@ -878,11 +700,9 @@ export default function GalleryApp({ projects = [] }) {
           jsxs("div", {
             className: "gallery-instructions",
             children: [
-              jsx("span", { children: "Click to enter immersive mode" }),
-              jsx("span", { children: "Center a frame · click to dive in" }),
-              jsx("span", { children: "Move mouse to look · WASD / Space / Q / E to drift" }),
-              jsx("span", { children: "Scroll to glide" }),
-              jsx("span", { children: "Press ESC to release" })
+              jsx("span", { children: "Hover a frame · click to enter" }),
+              jsx("span", { children: "Scroll to zoom" }),
+              jsx("span", { children: "Press ESC to return" })
             ]
           })
         ]
@@ -936,7 +756,7 @@ export default function GalleryApp({ projects = [] }) {
       }),
       jsx("div", {
         className: "status-indicator",
-        children: viewMode === "project" ? "Project View" : (pointerLocked ? "Immersive Navigation" : "Gallery Navigation")
+        children: viewMode === "project" ? "Project View" : "Gallery Navigation"
       }),
       !isSceneReady
         ? jsx("div", {

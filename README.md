@@ -8,7 +8,7 @@ An ultra-minimal portfolio that renders a floating 3D gallery using React 18 and
 .
 ├── index.html           # Lightweight entry point that wires styles + modules
 ├── styles/
-│   └── main.css         # Global typography, overlay, and crosshair styling
+│   └── main.css         # Global typography, overlay, and status styling
 └── src/
     ├── main.js          # Boots the React app and injects it into the page
     ├── GalleryApp.js    # React component + Three.js scene logic
@@ -68,6 +68,6 @@ The site targets evergreen browsers that support:
 
 - ES module imports
 - WebGL / Three.js
-- Pointer Lock API (immersive navigation)
+- Smooth wheel or trackpad scrolling
 
-A graceful fallback to click-and-drag orbiting is included for environments where pointer lock is unavailable.
+Navigation is intentionally simple—hover to highlight, scroll to zoom, click to enter—so no pointer-lock or keyboard controls are required.
