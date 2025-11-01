@@ -41,6 +41,11 @@
       display: block;
       width: 100%;
       height: 100%;
+      cursor: grab;
+    }
+
+    canvas:active {
+      cursor: grabbing;
     }
 
     .gallery-root {
@@ -110,7 +115,8 @@
 
     .frame-label {
       position: absolute;
-      transform: translate(-50%, -50%);
+      left: 0;
+      top: 0;
       text-align: center;
       color: var(--fg);
       text-transform: uppercase;
@@ -121,6 +127,7 @@
       box-shadow: 0 18px 34px rgba(0, 0, 0, 0.09);
       backdrop-filter: blur(14px);
       opacity: 0;
+      transform: translate(-50%, 0);
       transition: opacity 320ms ease, transform 320ms ease;
       white-space: nowrap;
     }
@@ -139,7 +146,6 @@
 
     .frame-label.visible {
       opacity: 1;
-      transform: translate(-50%, calc(-50% + 1.6rem));
     }
 
     .project-overlay {
@@ -497,7 +503,8 @@
         audio: null,
         ambienceStarted: false,
         lastMoveMagnitude: 0,
-        readyNotified: false
+        readyNotified: false,
+        homeLookTarget: null
       });
 
       useEffect(() => {
@@ -524,7 +531,9 @@
         scene.fog = fog;
 
         const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 120);
-        camera.position.set(0.2, 2.2, 13.5);
+        const initialCameraPosition = new THREE.Vector3(0, 1.85, 0);
+        const initialLookTarget = new THREE.Vector3(0, 1.6, -6);
+        camera.position.copy(initialCameraPosition);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -532,6 +541,7 @@
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.domElement.style.touchAction = "none";
+        renderer.domElement.style.cursor = "grab";
         container.appendChild(renderer.domElement);
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.78);
@@ -581,16 +591,17 @@
         runtime.clock = new THREE.Clock();
         const galleryCenter = new THREE.Vector3(0, 1.6, 0);
 
-        camera.lookAt(galleryCenter);
-        const homeDirection = new THREE.Vector3().subVectors(galleryCenter, camera.position).normalize();
+        camera.lookAt(initialLookTarget);
+        const homeDirection = new THREE.Vector3().subVectors(initialLookTarget, initialCameraPosition).normalize();
         runtime.controls.yaw = Math.atan2(homeDirection.x, homeDirection.z);
         runtime.controls.targetYaw = runtime.controls.yaw;
-        runtime.controls.pitch = Math.asin(homeDirection.y);
+        runtime.controls.pitch = Math.asin(THREE.MathUtils.clamp(homeDirection.y, -0.999, 0.999));
         runtime.controls.targetPitch = runtime.controls.pitch;
-        runtime.homePosition = camera.position.clone();
+        runtime.homePosition = initialCameraPosition.clone();
         runtime.homeQuaternion = camera.quaternion.clone();
         runtime.homeYaw = runtime.controls.yaw;
         runtime.homePitch = runtime.controls.pitch;
+        runtime.homeLookTarget = initialLookTarget.clone();
 
         runtime.textureLoader = new THREE.TextureLoader();
         runtime.textureLoader.setCrossOrigin("anonymous");
@@ -637,9 +648,8 @@
             Math.sin(baseTheta) * radius
           );
 
-          const baseline = new THREE.Vector3().copy(group.position);
-          baseline.y = galleryCenter.y;
-          group.lookAt(new THREE.Vector3().lerpVectors(baseline, galleryCenter, 0.4));
+          const initialFocus = new THREE.Vector3(0, galleryCenter.y, 0);
+          group.lookAt(initialFocus);
 
           const highlight = new THREE.Mesh(
             new THREE.PlaneGeometry(1.86, 1.86),
@@ -738,6 +748,7 @@
         const onPointerDown = (event) => {
           startAmbience();
           if (runtime.viewState !== "gallery") return;
+          renderer.domElement.style.cursor = "grabbing";
           runtime.controls.dragging = true;
           runtime.controls.lastPointer.x = event.clientX;
           runtime.controls.lastPointer.y = event.clientY;
@@ -752,6 +763,7 @@
             runtime.lastMoveMagnitude = dragDistance;
           }
           runtime.controls.dragging = false;
+          renderer.domElement.style.cursor = runtime.viewState === "gallery" ? "grab" : "default";
         };
 
         const onPointerMove = (event) => {
@@ -1066,19 +1078,23 @@
               const el = runtime.labels[idx];
               if (!el) return;
               if (runtime.viewState !== "gallery" && runtime.active === idx) {
-                el.style.opacity = "0";
+                el.classList.remove("visible");
                 return;
               }
-              const vector = item.group.getWorldPosition(new THREE.Vector3());
-              vector.project(camera);
-              const isVisible = vector.z < 1 && vector.z > -1;
+              const worldPosition = item.group.getWorldPosition(new THREE.Vector3());
+              const projected = worldPosition.clone().project(camera);
+              const isVisible = projected.z < 1 && projected.z > -1;
               if (!isVisible) {
                 el.classList.remove("visible");
                 return;
               }
-              const x = (vector.x * 0.5 + 0.5) * clientWidth;
-              const y = (-vector.y * 0.5 + 0.5) * clientHeight;
-              el.style.transform = `translate(${x}px, ${y}px)`;
+              const x = (projected.x * 0.5 + 0.5) * clientWidth;
+              const y = (-projected.y * 0.5 + 0.5) * clientHeight;
+              const distance = camera.position.distanceTo(worldPosition);
+              const offset = THREE.MathUtils.clamp(420 / Math.max(distance, 0.0001), 18, 72);
+              el.style.left = `${x}px`;
+              el.style.top = `${y}px`;
+              el.style.transform = `translate(-50%, ${offset}px)`;
               if (runtime.viewState === "gallery") {
                 el.classList.add("visible");
               } else {
@@ -1140,6 +1156,12 @@
           runtimeRef.current.ensureAdjacentLoaded?.(activeIndex);
         }
       }, [viewMode, activeIndex]);
+
+      useEffect(() => {
+        const dom = runtimeRef.current.renderer?.domElement;
+        if (!dom) return;
+        dom.style.cursor = viewMode === "gallery" ? "grab" : "default";
+      }, [viewMode]);
 
       const closeProject = () => {
         runtimeRef.current.internalClose?.();
