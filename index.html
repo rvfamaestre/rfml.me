@@ -41,11 +41,6 @@
       display: block;
       width: 100%;
       height: 100%;
-      cursor: grab;
-    }
-
-    canvas:active {
-      cursor: grabbing;
     }
 
     .gallery-root {
@@ -59,6 +54,41 @@
     .canvas-holder {
       position: absolute;
       inset: 0;
+    }
+
+    .crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.28);
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.05) 65%, transparent 100%);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 8px 24px rgba(0, 0, 0, 0.12);
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(0.88);
+      opacity: 0;
+      transition: opacity 240ms ease, transform 240ms ease;
+      mix-blend-mode: multiply;
+      z-index: 8;
+    }
+
+    .crosshair::after {
+      content: "";
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.75);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .crosshair.active {
+      opacity: 0.75;
+      transform: translate(-50%, -50%) scale(1);
     }
 
     .gallery-overlay {
@@ -464,6 +494,7 @@
       const [activeIndex, setActiveIndex] = useState(null);
       const [viewMode, setViewMode] = useState("gallery");
       const [isSceneReady, setSceneReady] = useState(false);
+      const [pointerLocked, setPointerLocked] = useState(false);
 
       const runtimeRef = useRef({
         scene: null,
@@ -502,10 +533,13 @@
         active: null,
         audio: null,
         ambienceStarted: false,
-        lastMoveMagnitude: 0,
         readyNotified: false,
         homeLookTarget: null,
-        orientationFlip: null
+        orientationFlip: null,
+        pointerLocked: false,
+        pointerLockSuppressClick: false,
+        pointerLockReleaseReason: null,
+        supportsPointerLock: true
       });
 
       useEffect(() => {
@@ -542,7 +576,7 @@
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.domElement.style.touchAction = "none";
-        renderer.domElement.style.cursor = "grab";
+        renderer.domElement.style.cursor = "crosshair";
         container.appendChild(renderer.domElement);
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.78);
@@ -590,6 +624,7 @@
         runtime.renderer = renderer;
         runtime.camera = camera;
         runtime.clock = new THREE.Clock();
+        runtime.supportsPointerLock = typeof renderer.domElement.requestPointerLock === "function";
         const galleryCenter = new THREE.Vector3(0, 1.6, 0);
 
         camera.lookAt(initialLookTarget);
@@ -748,57 +783,123 @@
           runtime.audio = audio;
         };
 
+        const exitFullscreen = () => {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+          if (document.fullscreenElement && exit) {
+            try {
+              const result = exit.call(document);
+              if (result && typeof result.catch === "function") {
+                result.catch(() => {});
+              }
+            } catch (err) {
+              /* noop */
+            }
+          }
+        };
+
+        const requestImmersiveMode = () => {
+          runtime.pointerLockReleaseReason = null;
+          if (runtime.supportsPointerLock && renderer.domElement.requestPointerLock) {
+            if (document.pointerLockElement !== renderer.domElement) {
+              renderer.domElement.requestPointerLock();
+              runtime.pointerLockSuppressClick = true;
+            }
+          } else {
+            runtime.pointerLocked = false;
+            runtime.pointerLockSuppressClick = false;
+          }
+          if (!document.fullscreenElement && container.requestFullscreen) {
+            container.requestFullscreen().catch(() => {});
+          }
+        };
+
         const onPointerDown = (event) => {
+          if (event.button !== 0) return;
+          event.preventDefault();
           startAmbience();
           if (runtime.viewState !== "gallery") return;
-          renderer.domElement.style.cursor = "grabbing";
-          runtime.controls.dragging = true;
-          runtime.controls.lastPointer.x = event.clientX;
-          runtime.controls.lastPointer.y = event.clientY;
+          if (runtime.supportsPointerLock) {
+            if (!runtime.pointerLocked) {
+              requestImmersiveMode();
+            }
+          } else {
+            runtime.controls.dragging = true;
+            runtime.controls.lastPointer.x = event.clientX;
+            runtime.controls.lastPointer.y = event.clientY;
+            const rect = renderer.domElement.getBoundingClientRect();
+            runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            renderer.domElement.style.cursor = "grabbing";
+            if (renderer.domElement.setPointerCapture) {
+              try {
+                renderer.domElement.setPointerCapture(event.pointerId);
+              } catch (err) {
+                /* noop */
+              }
+            }
+          }
         };
 
         const onPointerUp = (event) => {
-          if (runtime.controls.dragging && runtime.viewState === "gallery") {
-            const dragDistance = Math.hypot(
-              event.clientX - runtime.controls.lastPointer.x,
-              event.clientY - runtime.controls.lastPointer.y
-            );
-            runtime.lastMoveMagnitude = dragDistance;
+          if (event.button !== 0) return;
+          if (!runtime.supportsPointerLock) {
+            runtime.controls.dragging = false;
+            if (runtime.viewState === "gallery") {
+              renderer.domElement.style.cursor = "crosshair";
+            }
+            if (renderer.domElement.releasePointerCapture) {
+              try {
+                renderer.domElement.releasePointerCapture(event.pointerId);
+              } catch (err) {
+                /* noop */
+              }
+            }
           }
-          runtime.controls.dragging = false;
-          renderer.domElement.style.cursor = runtime.viewState === "gallery" ? "grab" : "default";
-        };
-
-        const onPointerMove = (event) => {
+          if (runtime.pointerLocked) return;
           const rect = renderer.domElement.getBoundingClientRect();
           runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
           runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        };
 
-          if (runtime.controls.dragging && runtime.viewState === "gallery") {
-            const dx = event.clientX - runtime.controls.lastPointer.x;
-            const dy = event.clientY - runtime.controls.lastPointer.y;
-            runtime.controls.targetYaw -= dx * 0.0022;
+        const onPointerMove = (event) => {
+          if (runtime.pointerLocked && runtime.viewState === "gallery") {
+            const sensitivity = 0.0018;
+            runtime.controls.targetYaw -= event.movementX * sensitivity;
             runtime.controls.targetPitch = THREE.MathUtils.clamp(
-              runtime.controls.targetPitch - dy * 0.0016,
-              -0.65,
-              0.45
+              runtime.controls.targetPitch - event.movementY * sensitivity,
+              -0.75,
+              0.6
             );
-            runtime.controls.lastPointer.x = event.clientX;
-            runtime.controls.lastPointer.y = event.clientY;
+            runtime.pointer.set(0, 0);
+          } else {
+            const rect = renderer.domElement.getBoundingClientRect();
+            runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            if (!runtime.supportsPointerLock && runtime.controls.dragging && runtime.viewState === "gallery") {
+              const dx = event.clientX - runtime.controls.lastPointer.x;
+              const dy = event.clientY - runtime.controls.lastPointer.y;
+              runtime.controls.targetYaw -= dx * 0.0022;
+              runtime.controls.targetPitch = THREE.MathUtils.clamp(
+                runtime.controls.targetPitch - dy * 0.0016,
+                -0.65,
+                0.45
+              );
+              runtime.controls.lastPointer.x = event.clientX;
+              runtime.controls.lastPointer.y = event.clientY;
+            }
           }
         };
 
         const onClick = (event) => {
-          if (runtime.viewState !== "gallery") return;
-          if (runtime.lastMoveMagnitude > 5) {
-            runtime.lastMoveMagnitude = 0;
+          if (runtime.pointerLockSuppressClick) {
+            runtime.pointerLockSuppressClick = false;
             return;
           }
+          if (runtime.viewState !== "gallery") return;
           if (runtime.hovered) {
             event.preventDefault();
             openFrame(runtime.hovered);
           }
-          runtime.lastMoveMagnitude = 0;
         };
 
         const onWheel = (event) => {
@@ -826,7 +927,8 @@
           KeyQ: "down",
           KeyE: "up",
           Space: "up",
-          ShiftLeft: "down"
+          ShiftLeft: "down",
+          ShiftRight: "down"
         };
 
         const onKeyDown = (event) => {
@@ -866,15 +968,51 @@
 
         renderer.domElement.addEventListener("pointerdown", onPointerDown);
         renderer.domElement.addEventListener("pointerup", onPointerUp);
+        renderer.domElement.addEventListener("pointercancel", onPointerUp);
         renderer.domElement.addEventListener("pointermove", onPointerMove);
         renderer.domElement.addEventListener("click", onClick);
         renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
         window.addEventListener("keydown", onKeyDown);
         window.addEventListener("keyup", onKeyUp);
         window.addEventListener("resize", onResize);
+        const onPointerLockChange = () => {
+          const locked = document.pointerLockElement === renderer.domElement;
+          runtime.pointerLocked = locked;
+          const releaseReason = runtime.pointerLockReleaseReason;
+          runtime.pointerLockReleaseReason = null;
+          setPointerLocked(locked);
+          if (locked) {
+            runtime.pointer.set(0, 0);
+            renderer.domElement.style.cursor = "none";
+          } else {
+            runtime.pointerLockSuppressClick = false;
+            renderer.domElement.style.cursor = releaseReason === "project"
+              ? "default"
+              : (runtime.viewState === "gallery" ? "crosshair" : "default");
+            runtime.pointer.set(0, 0);
+            if (releaseReason !== "project") {
+              exitFullscreen();
+            }
+          }
+        };
+        const onPointerLockError = () => {
+          runtime.pointerLocked = false;
+          runtime.pointerLockReleaseReason = null;
+          runtime.pointerLockSuppressClick = false;
+          setPointerLocked(false);
+          renderer.domElement.style.cursor = runtime.viewState === "gallery" ? "crosshair" : "default";
+          exitFullscreen();
+        };
+        document.addEventListener("pointerlockchange", onPointerLockChange);
+        document.addEventListener("pointerlockerror", onPointerLockError);
 
         const openFrame = (frameItem) => {
           if (runtime.transition) return;
+          if (document.pointerLockElement === renderer.domElement) {
+            runtime.pointerLockReleaseReason = "project";
+            document.exitPointerLock();
+          }
+          runtime.controls.dragging = false;
           ensureAdjacentLoaded(frameItem.index);
           const focusPoint = frameItem.group.getWorldPosition(new THREE.Vector3());
           const frameForward = new THREE.Vector3(0, 0, 1).applyQuaternion(frameItem.group.quaternion).normalize();
@@ -898,7 +1036,6 @@
             toPosition.y - focusPoint.y,
             Math.max(planar.length(), 1e-4)
           );
-          runtime.controls.dragging = false;
           runtime.viewState = "transitioning";
           setViewMode("transitioning");
           setActiveIndex(frameItem.index);
@@ -974,6 +1111,9 @@
           }
 
           runtime.hovered = null;
+          if (runtime.pointerLocked) {
+            runtime.pointer.set(0, 0);
+          }
           runtime.raycaster.setFromCamera(runtime.pointer, camera);
           const intersects = runtime.raycaster.intersectObjects(
             runtime.frameItems.map((item) => item.artworkMesh),
@@ -984,7 +1124,6 @@
             runtime.hovered = match || null;
           }
 
-          const orientationFlip = runtime.orientationFlip || new THREE.Quaternion();
           runtime.frameItems.forEach((item, index) => {
             const frame = item.group;
             const orbit = item.orbit;
@@ -1057,7 +1196,6 @@
                 runtime.viewState = "project";
                 setViewMode("project");
                 runtime.active = runtime.transition.focusFrame.index;
-                runtime.controls.dragging = false;
               } else {
                 runtime.viewState = "gallery";
                 setViewMode("gallery");
@@ -1067,7 +1205,6 @@
                 runtime.controls.pitch = runtime.homePitch;
                 runtime.controls.targetYaw = runtime.homeYaw;
                 runtime.controls.targetPitch = runtime.homePitch;
-                runtime.controls.dragging = false;
               }
               runtime.transition = null;
             }
@@ -1115,12 +1252,15 @@
           cancelAnimationFrame(runtime.requestId);
           renderer.domElement.removeEventListener("pointerdown", onPointerDown);
           renderer.domElement.removeEventListener("pointerup", onPointerUp);
+          renderer.domElement.removeEventListener("pointercancel", onPointerUp);
           renderer.domElement.removeEventListener("pointermove", onPointerMove);
           renderer.domElement.removeEventListener("click", onClick);
           renderer.domElement.removeEventListener("wheel", onWheel);
           window.removeEventListener("keydown", onKeyDown);
           window.removeEventListener("keyup", onKeyUp);
           window.removeEventListener("resize", onResize);
+          document.removeEventListener("pointerlockchange", onPointerLockChange);
+          document.removeEventListener("pointerlockerror", onPointerLockError);
 
           runtime.frameItems.forEach((item) => {
             if (item.texture) {
@@ -1161,8 +1301,12 @@
       useEffect(() => {
         const dom = runtimeRef.current.renderer?.domElement;
         if (!dom) return;
-        dom.style.cursor = viewMode === "gallery" ? "grab" : "default";
-      }, [viewMode]);
+        if (pointerLocked) {
+          dom.style.cursor = "none";
+        } else {
+          dom.style.cursor = viewMode === "gallery" ? "crosshair" : "default";
+        }
+      }, [viewMode, pointerLocked]);
 
       const closeProject = () => {
         runtimeRef.current.internalClose?.();
@@ -1176,6 +1320,7 @@
         className: "gallery-root",
         children: [
           jsx("div", { className: "canvas-holder", ref: containerRef }),
+          jsx("div", { className: pointerLocked ? "crosshair active" : "crosshair", "aria-hidden": "true" }),
           jsxs("div", {
             className: "gallery-overlay",
             children: [
@@ -1196,10 +1341,11 @@
               jsxs("div", {
                 className: "gallery-instructions",
                 children: [
-                  jsx("span", { children: "Click a frame to enter" }),
-                  jsx("span", { children: "Mouse drag to orbit" }),
-                  jsx("span", { children: "Scroll / WASD to explore" }),
-                  jsx("span", { children: "ESC to return" })
+                  jsx("span", { children: "Click to enter immersive mode" }),
+                  jsx("span", { children: "Center a frame · click to dive in" }),
+                  jsx("span", { children: "Move mouse to look · WASD / Space / Q / E to drift" }),
+                  jsx("span", { children: "Scroll to glide" }),
+                  jsx("span", { children: "Press ESC to release" })
                 ]
               })
             ]
@@ -1253,7 +1399,7 @@
           }),
           jsx("div", {
             className: "status-indicator",
-            children: viewMode === "gallery" ? "Gallery Navigation" : "Project View"
+            children: viewMode === "project" ? "Project View" : (pointerLocked ? "Immersive Navigation" : "Gallery Navigation")
           }),
           !isSceneReady
             ? jsx("div", {
