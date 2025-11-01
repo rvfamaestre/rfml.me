@@ -580,7 +580,6 @@
         runtime.camera = camera;
         runtime.clock = new THREE.Clock();
         const galleryCenter = new THREE.Vector3(0, 1.6, 0);
-        const bounds = new THREE.Vector3(18, 5, 18);
 
         camera.lookAt(galleryCenter);
         const homeDirection = new THREE.Vector3().subVectors(galleryCenter, camera.position).normalize();
@@ -628,13 +627,14 @@
           artworkMesh.userData.isArtwork = true;
           group.add(artworkMesh);
 
-          const theta = index * 0.82;
-          const radial = 9 + Math.sin(index * 0.37) * 2.2;
-          const y = (index % 6) * 0.8 - 1.6 + Math.sin(index * 1.1) * 0.6;
+          const baseTheta = index * 0.82;
+          const radius = 9 + Math.sin(index * 0.37) * 2.2;
+          const heightBase = (index % 6) * 0.8 - 1.6;
+          const phase = Math.random() * Math.PI * 2;
           group.position.set(
-            Math.cos(theta) * radial,
-            y + Math.sin(theta * 0.6) * 1.4,
-            Math.sin(theta) * radial
+            Math.cos(baseTheta) * radius,
+            heightBase + Math.sin(baseTheta * 0.6) * 1.2,
+            Math.sin(baseTheta) * radius
           );
 
           const baseline = new THREE.Vector3().copy(group.position);
@@ -648,18 +648,6 @@
           highlight.position.z = 0.06;
           group.add(highlight);
 
-          const velocity = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.06,
-            (Math.random() - 0.5) * 0.02,
-            (Math.random() - 0.5) * 0.06
-          );
-
-          const rotationMomentum = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.08,
-            (Math.random() - 0.5) * 0.04,
-            (Math.random() - 0.5) * 0.08
-          );
-
           scene.add(group);
 
           return {
@@ -669,13 +657,22 @@
             frameMesh,
             artworkMesh,
             highlight,
-            velocity,
-            rotationMomentum,
-            baseQuaternion: group.quaternion.clone(),
+            orbit: {
+              baseTheta,
+              radius,
+              heightBase,
+              speed: 0.06 + Math.random() * 0.03,
+              bobAmplitude: 0.35 + Math.random() * 0.35,
+              bobFrequency: 0.6 + Math.random() * 0.35,
+              radialPulse: 0.3 + Math.random() * 0.25,
+              phase,
+              timeOffset: 0,
+              isFrozen: false,
+              frozenTime: 0
+            },
             loaded: false,
             loading: false,
-            texture: null,
-            bounds
+            texture: null
           };
         };
 
@@ -924,6 +921,7 @@
           if (runtime.disposed) return;
           runtime.requestId = requestAnimationFrame(animate);
           const delta = Math.min(runtime.clock.getDelta(), 0.045);
+          const elapsedTime = runtime.clock.elapsedTime;
 
           runtime.controls.yaw = THREE.MathUtils.damp(runtime.controls.yaw, runtime.controls.targetYaw, 4, delta);
           runtime.controls.pitch = THREE.MathUtils.damp(runtime.controls.pitch, runtime.controls.targetPitch, 4, delta);
@@ -973,38 +971,48 @@
 
           runtime.frameItems.forEach((item, index) => {
             const frame = item.group;
-            const isFocused = runtime.active === index && runtime.viewState !== "gallery";
+            const orbit = item.orbit;
+            const isActiveIndex = typeof runtime.active === "number" && runtime.active === index;
+            const isTransitionFocus = runtime.transition?.focusFrame === item;
+            const isFrozen = runtime.viewState !== "gallery" && (isActiveIndex || isTransitionFocus);
 
-            if (!isFocused) {
-              const toCenter = new THREE.Vector3().subVectors(galleryCenter, frame.position).multiplyScalar(0.02);
-              item.velocity.addScaledVector(toCenter, delta);
-              item.velocity.y += Math.sin(performance.now() * 0.00025 + index) * 0.005 * delta;
-              item.velocity.multiplyScalar(0.98);
-              frame.position.addScaledVector(item.velocity, delta * 60);
+            if (orbit) {
+              if (isFrozen) {
+                if (!orbit.isFrozen) {
+                  orbit.isFrozen = true;
+                  orbit.frozenTime = elapsedTime;
+                }
+              } else {
+                if (orbit.isFrozen) {
+                  orbit.timeOffset += elapsedTime - orbit.frozenTime;
+                  orbit.isFrozen = false;
+                }
+                const orbitTime = elapsedTime - orbit.timeOffset;
+                const orbitAngle = orbit.baseTheta + orbitTime * orbit.speed;
+                const radial = orbit.radius + Math.sin(orbitTime * 0.45 + orbit.phase) * orbit.radialPulse;
+                const x = Math.cos(orbitAngle) * radial;
+                const z = Math.sin(orbitAngle) * radial;
+                const y = orbit.heightBase + Math.sin(orbitTime * orbit.bobFrequency + orbit.phase) * orbit.bobAmplitude;
+                frame.position.set(x, y, z);
 
-              if (Math.abs(frame.position.x) > item.bounds.x) {
-                frame.position.x = THREE.MathUtils.clamp(frame.position.x, -item.bounds.x, item.bounds.x);
-                item.velocity.x *= -0.6;
+                const lookTarget = new THREE.Vector3(
+                  0,
+                  galleryCenter.y + Math.sin(orbitTime * 0.18 + orbit.phase) * 0.25,
+                  0
+                );
+                const baseQuat = new THREE.Quaternion().setFromRotationMatrix(
+                  new THREE.Matrix4().lookAt(frame.position.clone(), lookTarget, new THREE.Vector3(0, 1, 0))
+                );
+                const driftQuat = new THREE.Quaternion().setFromEuler(
+                  new THREE.Euler(
+                    Math.sin(orbitTime * 0.6 + orbit.phase) * 0.04,
+                    Math.cos(orbitTime * 0.5 + orbit.phase) * 0.06,
+                    Math.sin(orbitTime * 0.4 + orbit.phase) * 0.02
+                  )
+                );
+                const finalQuat = baseQuat.clone().multiply(driftQuat);
+                frame.quaternion.slerp(finalQuat, 0.08);
               }
-              if (frame.position.y > item.bounds.y || frame.position.y < -item.bounds.y) {
-                frame.position.y = THREE.MathUtils.clamp(frame.position.y, -item.bounds.y, item.bounds.y);
-                item.velocity.y *= -0.6;
-              }
-              if (Math.abs(frame.position.z) > item.bounds.z) {
-                frame.position.z = THREE.MathUtils.clamp(frame.position.z, -item.bounds.z, item.bounds.z);
-                item.velocity.z *= -0.6;
-              }
-
-              const baseQuat = item.baseQuaternion.clone();
-              const driftQuat = new THREE.Quaternion().setFromEuler(
-                new THREE.Euler(
-                  Math.sin(performance.now() * 0.0004 + index) * 0.06,
-                  Math.cos(performance.now() * 0.00035 + index * 0.5) * 0.08,
-                  Math.sin(performance.now() * 0.0003 + index * 0.2) * 0.04
-                )
-              );
-
-              frame.quaternion.slerp(new THREE.Quaternion().multiplyQuaternions(baseQuat, driftQuat), 0.015);
             }
 
             const highlightTarget = runtime.hovered === item ? 0.32 : 0;
