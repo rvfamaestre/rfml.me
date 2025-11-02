@@ -284,6 +284,40 @@ export default function GalleryApp({ projects = [] }) {
     runtime.loadCanvasTexture = loadCanvasTexture;
     runtime.ensureAdjacentLoaded = ensureAdjacentLoaded;
 
+    const enterFullscreen = () => {
+      if (runtime.viewState !== "gallery") return;
+      const activeElement =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement;
+      if (activeElement) return;
+      const request =
+        container.requestFullscreen ||
+        container.webkitRequestFullscreen ||
+        container.mozRequestFullScreen ||
+        container.msRequestFullscreen;
+      if (!request) return;
+      const invokeRequest = (options) => {
+        try {
+          const result = options ? request.call(container, options) : request.call(container);
+          if (result && typeof result.catch === "function") {
+            result.catch(() => {});
+          }
+          return true;
+        } catch (err) {
+          return false;
+        }
+      };
+      if (request === container.requestFullscreen) {
+        if (!invokeRequest({ navigationUI: "hide" })) {
+          invokeRequest();
+        }
+      } else {
+        invokeRequest();
+      }
+    };
+
     const startAmbience = () => {
       if (runtime.ambienceStarted) return;
       runtime.ambienceStarted = true;
@@ -297,7 +331,12 @@ export default function GalleryApp({ projects = [] }) {
 
     const exitFullscreen = () => {
       const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-      if (document.fullscreenElement && exit) {
+      const activeElement =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement;
+      if (activeElement && exit) {
         try {
           const result = exit.call(document);
           if (result && typeof result.catch === "function") {
@@ -312,6 +351,7 @@ export default function GalleryApp({ projects = [] }) {
     const onPointerDown = (event) => {
       if (event.button !== 0) return;
       startAmbience();
+      enterFullscreen();
       const rect = renderer.domElement.getBoundingClientRect();
       runtime.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       runtime.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -391,7 +431,6 @@ export default function GalleryApp({ projects = [] }) {
 
     const openFrame = (frameItem) => {
       if (runtime.transition) return;
-      exitFullscreen();
       ensureAdjacentLoaded(frameItem.index);
       const focusPoint = frameItem.group.getWorldPosition(new THREE.Vector3());
       const frameForward = new THREE.Vector3(0, 0, 1).applyQuaternion(frameItem.group.quaternion).normalize();
