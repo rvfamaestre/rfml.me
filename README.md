@@ -27,7 +27,7 @@ All code is served as native ES modules. You can open `index.html` directly in a
    ```js
    {
      title: "Parametric Skyline",
-     date: "2024",
+     date: "May 2025 | 9 wks",
      category: "3D Design",   // optional tag shown in the overlay
      image: "https://…"        // HTTPS image URL with CORS enabled
    }

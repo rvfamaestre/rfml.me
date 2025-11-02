@@ -466,7 +466,7 @@ export default function GalleryApp({ projects = [] }) {
         const spinMagnitude = Math.abs(runtime.controls.spinSmooth);
         const yawAcceleration = 1.85;
         const yawDelta = runtime.controls.spinSmooth * spinMagnitude * yawAcceleration * delta;
-        runtime.controls.targetYaw += yawDelta;
+        runtime.controls.targetYaw -= yawDelta;
 
         const desiredPitch = THREE.MathUtils.clamp(
           runtime.homePitch + runtime.controls.tiltSmooth * 0.45,
