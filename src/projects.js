@@ -10,12 +10,183 @@
  * of projects supplied, so you only need to maintain this list.
  */
 export default [
-  { title: "Parametric Skyline", date: "Mar 2024 | 6 wks", category: "3D Design", image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80" },
-  { title: "Circuit Ballet", date: "Nov 2023 | 5 wks", category: "Electronics", image: "https://images.unsplash.com/photo-1527430253228-e93688616381?auto=format&fit=crop&w=1200&q=80" },
-  { title: "Volatility Atlas", date: "Jul 2022 | 7 wks", category: "Quant Finance", image: "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80" },
-  { title: "Tactile Compiler", date: "May 2024 | 8 wks", category: "Software", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80" },
-  { title: "Adaptive Control Field", date: "Feb 2023 | 6 wks", category: "Control Systems", image: "https://images.unsplash.com/photo-1482192597420-4817fdd7e8b0?auto=format&fit=crop&w=1200&q=80" },
-  { title: "Automaton Chorus", date: "Jan 2024 | 4 wks", category: "Automation", image: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80" },
+  {
+    title: "Parametric Skyline",
+    date: "Mar 2024 | 6 wks",
+    category: "3D Design",
+    variant: "visual",
+    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=90",
+    gallery: [
+      {
+        src: "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1400&q=85",
+        caption: "Daylight study over the northern atrium"
+      },
+      {
+        src: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1400&q=85",
+        caption: "Algorithmic massing iterations"
+      }
+    ],
+    description: [
+      "A parametric tower system exploring orbital setbacks and civic terraces suspended above Madrid. The scheme balances structural rhythm with a hushed glass envelope tuned to the city’s diffuse light.",
+      "The final composition was iterated live with stakeholders, allowing the skyline to emerge as a conversational act rather than a frozen render."
+    ],
+    technologies: ["Rhino", "Grasshopper", "Unreal Engine", "Enscape"],
+    highlights: [
+      "Generated 280+ volumetric options in real time during client workshops.",
+      "Reduced facade material takeoff by 14% through adaptive panel aggregation."
+    ],
+    links: [
+      { label: "Process Journal", url: "https://example.com/parametric-skyline" },
+      { label: "Interactive Prototype", url: "https://example.com/skyline-live" }
+    ]
+  },
+  {
+    title: "Circuit Ballet",
+    date: "Nov 2023 | 5 wks",
+    category: "Electronics",
+    variant: "technical",
+    image: "https://images.unsplash.com/photo-1527430253228-e93688616381?auto=format&fit=crop&w=1400&q=90",
+    gallery: [
+      {
+        src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=90",
+        caption: "Realtime visualization of control curves"
+      },
+      {
+        src: "https://images.unsplash.com/photo-1526481280695-3c4693fc3241?auto=format&fit=crop&w=1400&q=90",
+        caption: "Stage rig wiring diagram"
+      }
+    ],
+    description: [
+      "An immersive performance where modular synths drive a fleet of kinetic light fixtures. Each sequence is routed through a custom PCB that translates MIDI dynamics into voltage whispers across the stage.",
+      "The piece champions precision and restraint—motion emerges only when the score invites it."
+    ],
+    technologies: ["Max/MSP", "Custom PCB", "Teensy 4.1", "DMX512"],
+    highlights: [
+      "Latency trimmed to 11 ms end-to-end across audio, control, and luminaire response.",
+      "Hot-swappable driver cards allow full rig reconfiguration between acts."
+    ],
+    links: [
+      { label: "Performance Cut", url: "https://example.com/circuit-ballet" }
+    ]
+  },
+  {
+    title: "Volatility Atlas",
+    date: "Jul 2022 | 7 wks",
+    category: "Quant Finance",
+    variant: "technical",
+    image: "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1400&q=90",
+    gallery: [
+      {
+        src: "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=70&sat=-40",
+        caption: "Option surface topography rendered as light"
+      },
+      {
+        src: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80",
+        caption: "Stress scenario weave for Federal index clients"
+      }
+    ],
+    description: [
+      "A living cartography of implied volatility surfaces across 38 global indices. The atlas renders risk as spatial gradients, letting investment committees intuit how liquidity shifts ripple through time.",
+      "Every panel is tuned for quiet cognition: no heat maps, no alarm bells—just calm, legible change."
+    ],
+    technologies: ["Python", "Dask", "Plotly", "AWS Lambda"],
+    highlights: [
+      "Cut daily surface generation time from 46 minutes to 6 minutes via vectorized calibration.",
+      "Embedded explainability layer documents signal provenance for audit trails."
+    ],
+    links: [
+      { label: "Whitepaper", url: "https://example.com/volatility-atlas" },
+      { label: "Data Schema", url: "https://example.com/atlas-schema" }
+    ]
+  },
+  {
+    title: "Tactile Compiler",
+    date: "May 2024 | 8 wks",
+    category: "Software",
+    variant: "technical",
+    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=88",
+    gallery: [
+      {
+        src: "https://images.unsplash.com/photo-1527430253228-e93688616381?auto=format&fit=crop&w=1200&q=85",
+        caption: "Haptic feedback horizons mapped across code blocks"
+      },
+      {
+        src: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=85",
+        caption: "Interactive syntax annotations for studio critiques"
+      }
+    ],
+    description: [
+      "An experimental compiler that renders code structure as physical feedback, translating parser states into subtle vibrations across a slate-like device.",
+      "Designed for blind and low-vision engineers, the interface surfaces scope, errors, and control flow without reliance on a visual tree."
+    ],
+    technologies: ["Rust", "WebAssembly", "LibUSB", "SwiftUI"],
+    highlights: [
+      "Achieved 98% parity with clang on LLVM IR output for supported constructs.",
+      "Haptic library exposes a 240Hz modulation channel for expressive cues."
+    ],
+    links: [
+      { label: "Source", url: "https://example.com/tactile-compiler" },
+      { label: "Accessibility Notes", url: "https://example.com/tactile-a11y" }
+    ]
+  },
+  {
+    title: "Adaptive Control Field",
+    date: "Feb 2023 | 6 wks",
+    category: "Control Systems",
+    variant: "technical",
+    image: "https://images.unsplash.com/photo-1482192597420-4817fdd7e8b0?auto=format&fit=crop&w=1400&q=88",
+    gallery: [
+      {
+        src: "https://images.unsplash.com/photo-1500535708195-a5fc1a0fb4c4?auto=format&fit=crop&w=1200&q=80",
+        caption: "Mid-air drone choreography under adaptive PID tuning"
+      },
+      {
+        src: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=82",
+        caption: "Supervisory console with confidence bands"
+      }
+    ],
+    description: [
+      "A responsive control environment for coordinating autonomous drones during disaster assessment. The field engine learns from pilot overrides to retune PID gains in-flight.",
+      "The experience stays quiet—operators see only gentle confidence envelopes and receive a subtle nudge when a manual intervention improves stability."
+    ],
+    technologies: ["ROS2", "C++20", "PX4", "TensorFlow Lite"],
+    highlights: [
+      "Reduced oscillation amplitude by 37% in gusty conditions during field trials.",
+      "Two-way telemetry compression lowers spectrum usage by 28% compared to baseline."
+    ],
+    links: [
+      { label: "Flight Log", url: "https://example.com/adaptive-control-field" }
+    ]
+  },
+  {
+    title: "Automaton Chorus",
+    date: "Jan 2024 | 4 wks",
+    category: "Automation",
+    variant: "concept",
+    image: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1400&q=88",
+    gallery: [
+      {
+        src: "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?auto=format&fit=crop&w=1200&q=85",
+        caption: "Lighting halos responding to choral harmonics"
+      },
+      {
+        src: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=85",
+        caption: "Mechanical throat prototype with acoustic sensors"
+      }
+    ],
+    description: [
+      "A speculative installation where robotic throats echo human singers in real time. Each sculpted larynx listens, interprets, and returns a shimmer of harmonics—never identical, always empathetic.",
+      "The room behaves like a sanctuary: dim, hushed, and attuned to the micro-behaviors of breath."
+    ],
+    technologies: ["TouchDesigner", "Ableton Live", "Embedded DSP"],
+    highlights: [
+      "Calibrated feedback paths to keep mechanical resonance below 2% THD.",
+      "Light field responds within 40 ms to blend human and machine vibrato."
+    ],
+    links: [
+      { label: "Installation Film", url: "https://example.com/automaton-chorus" }
+    ]
+  },
   { title: "Nonlinear Poem", date: "Sep 2022 | 5 wks", category: "Mathematics", image: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1200&q=80" },
   { title: "Monochrome Atelier", date: "Jun 2021 | 8 wks", category: "Fashion", image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80" },
   { title: "Silver Halide Study", date: "Oct 2020 | 6 wks", category: "Photography", image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80" },

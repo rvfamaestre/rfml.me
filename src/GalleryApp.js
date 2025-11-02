@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "https://cdn.jsdelivr.net/npm/react@18.2.0/+esm";
+import { useCallback, useEffect, useMemo, useRef, useState } from "https://cdn.jsdelivr.net/npm/react@18.2.0/+esm";
 import { jsx, jsxs } from "https://cdn.jsdelivr.net/npm/react@18.2.0/jsx-runtime/+esm";
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 import { easeStandard, easeDramatic } from "./utils/easings.js";
@@ -6,9 +6,14 @@ import { easeStandard, easeDramatic } from "./utils/easings.js";
 export default function GalleryApp({ projects = [] }) {
   const containerRef = useRef(null);
   const labelsLayerRef = useRef(null);
+  const projectScrollRef = useRef(null);
+  const projectOverlayRef = useRef(null);
+  const touchStartRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(null);
   const [viewMode, setViewMode] = useState("gallery");
   const [isSceneReady, setSceneReady] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const runtimeRef = useRef({
     scene: null,
@@ -48,6 +53,183 @@ export default function GalleryApp({ projects = [] }) {
     orientationFlip: null
   });
 
+  const totalProjects = projects.length;
+
+  const activeProject = useMemo(
+    () => (typeof activeIndex === "number" ? projects[activeIndex] ?? null : null),
+    [activeIndex, projects]
+  );
+
+  const projectVariant = useMemo(() => {
+    if (!activeProject) return "visual";
+    if (activeProject.variant) return activeProject.variant;
+    const category = (activeProject.category || "").toLowerCase();
+    if (
+      /software|electronics|automation|quant|control|security|robot|deep|ai|finance|systems|iot|engineering|plasma|material|satellite/.test(
+        category
+      )
+    ) {
+      return "technical";
+    }
+    if (/charity|story|experimental|heritage|concept|narrative|sustain|immersive/.test(category)) {
+      return "concept";
+    }
+    return "visual";
+  }, [activeProject]);
+
+  const projectMediaList = useMemo(() => {
+    if (!activeProject) return [];
+    const normalize = (entry) => {
+      if (!entry) return null;
+      if (typeof entry === "string") {
+        const lower = entry.toLowerCase();
+        const isVideo = /\.(mp4|webm|mov)$/.test(lower) || lower.includes("video");
+        return {
+          src: entry,
+          kind: isVideo ? "video" : "image",
+          caption: "",
+          alt: `${activeProject.title} media`
+        };
+      }
+      if (typeof entry === "object" && entry.src) {
+        const lower = String(entry.src).toLowerCase();
+        const kind = entry.kind || entry.type || (/\.(mp4|webm|mov)$/.test(lower) ? "video" : "image");
+        return {
+          src: entry.src,
+          kind,
+          caption: entry.caption || entry.title || "",
+          alt: entry.alt || entry.caption || `${activeProject.title} media`
+        };
+      }
+      return null;
+    };
+    const heroCandidate = normalize(activeProject.heroImage || activeProject.cover || activeProject.image);
+    const supplementalRaw = Array.isArray(activeProject.gallery)
+      ? activeProject.gallery
+      : Array.isArray(activeProject.media)
+      ? activeProject.media
+      : [];
+    const supplemental = supplementalRaw.map(normalize).filter(Boolean);
+    const combined = [];
+    const seen = new Set();
+    if (heroCandidate && !seen.has(heroCandidate.src)) {
+      combined.push(heroCandidate);
+      seen.add(heroCandidate.src);
+    }
+    supplemental.forEach((item) => {
+      if (!item || !item.src || seen.has(item.src)) return;
+      combined.push(item);
+      seen.add(item.src);
+    });
+    return combined;
+  }, [activeProject]);
+
+  const heroMedia = projectMediaList[0] || null;
+  const galleryMedia = projectMediaList.slice(1);
+
+  const projectDescription = useMemo(() => {
+    if (!activeProject) return "";
+    if (Array.isArray(activeProject.description)) {
+      return activeProject.description.join("\n\n");
+    }
+    if (activeProject.description) {
+      return activeProject.description;
+    }
+    const category = (activeProject.category || "interdisciplinary studio").toLowerCase();
+    const dateSegments = (activeProject.date || "").split("|").map((part) => part.trim());
+    const cadence = dateSegments[1] ? ` developed over ${dateSegments[1].toLowerCase()}` : "";
+    return `A ${category} study${cadence}, composed as a quiet investigation into form, light, and intent.`;
+  }, [activeProject]);
+
+  const descriptionParagraphs = useMemo(() => {
+    if (!projectDescription) return [];
+    if (Array.isArray(activeProject?.description)) {
+      return activeProject.description.filter(Boolean);
+    }
+    return String(projectDescription)
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean);
+  }, [activeProject?.description, projectDescription]);
+
+  const detailItems = useMemo(() => {
+    if (!activeProject) return [];
+    if (Array.isArray(activeProject.details)) {
+      return activeProject.details.filter((item) => item && item.label && item.value);
+    }
+    const items = [];
+    if (activeProject.category) {
+      items.push({ label: "Discipline", value: activeProject.category });
+    }
+    if (activeProject.date) {
+      items.push({ label: "Timeline", value: activeProject.date });
+    }
+    return items;
+  }, [activeProject]);
+
+  const projectTechnologies = useMemo(() => {
+    if (!activeProject) return [];
+    if (Array.isArray(activeProject.technologies)) {
+      return activeProject.technologies.filter(Boolean);
+    }
+    if (Array.isArray(activeProject.stack)) {
+      return activeProject.stack.filter(Boolean);
+    }
+    return [];
+  }, [activeProject]);
+
+  const technicalHighlights = useMemo(() => {
+    if (!activeProject) return [];
+    const highlights = activeProject.highlights || activeProject.achievements || activeProject.milestones;
+    if (Array.isArray(highlights)) {
+      return highlights.filter(Boolean);
+    }
+    return [];
+  }, [activeProject]);
+
+  const projectLinks = useMemo(() => {
+    if (!activeProject) return [];
+    if (!Array.isArray(activeProject.links)) return [];
+    return activeProject.links
+      .filter((item) => item && typeof item === "object" && item.url)
+      .map((item, idx) => ({
+        label: item.label || `Resource ${idx + 1}`,
+        url: item.url
+      }));
+  }, [activeProject]);
+
+  const projectOrdinal = useMemo(() => {
+    if (typeof activeIndex !== "number") return "";
+    const current = activeIndex + 1;
+    const total = totalProjects;
+    return `${current.toString().padStart(2, "0")} / ${total.toString().padStart(2, "0")}`;
+  }, [activeIndex, totalProjects]);
+
+  const projectPositionLabel = useMemo(() => {
+    if (typeof activeIndex !== "number") return "";
+    return `Project ${activeIndex + 1} of ${totalProjects}`;
+  }, [activeIndex, totalProjects]);
+
+  const relatedProjects = useMemo(() => {
+    if (!activeProject) return [];
+    const baseCategory = (activeProject.category || "").toLowerCase();
+    const pool = projects
+      .map((project, index) => ({ project, index }))
+      .filter((entry) => entry.index !== activeIndex);
+    const primary = pool.filter(
+      (entry) => baseCategory && (entry.project.category || "").toLowerCase().includes(baseCategory)
+    );
+    const used = new Set(primary.map((entry) => entry.index));
+    const secondary = pool.filter((entry) => !used.has(entry.index));
+    return [...primary, ...secondary].slice(0, 4);
+  }, [projects, activeProject, activeIndex]);
+
+  const parallaxHero = -scrollPosition * 0.12;
+  const parallaxMeta = -scrollPosition * 0.06;
+  const parallaxGallery = -scrollPosition * 0.03;
+  const overlayVariantClass = ` project-variant-${projectVariant}`;
+  const lightboxOpen = lightboxIndex !== null;
+  const lightboxMedia = lightboxOpen && projectMediaList[lightboxIndex] ? projectMediaList[lightboxIndex] : null;
   useEffect(() => {
     runtimeRef.current.viewState = viewMode;
   }, [viewMode]);
@@ -55,6 +237,102 @@ export default function GalleryApp({ projects = [] }) {
   useEffect(() => {
     runtimeRef.current.active = activeIndex;
   }, [activeIndex]);
+
+  useEffect(() => {
+    if (viewMode !== "project") {
+      setScrollPosition(0);
+      setLightboxIndex(null);
+      return;
+    }
+    const scrollElement = projectScrollRef.current;
+    if (!scrollElement) return;
+    scrollElement.scrollTo(0, 0);
+    setScrollPosition(0);
+  }, [viewMode, activeIndex]);
+
+  useEffect(() => {
+    if (viewMode !== "project") return;
+    const scrollElement = projectScrollRef.current;
+    if (!scrollElement) return;
+    let frame = null;
+    const handleScroll = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setScrollPosition(scrollElement.scrollTop);
+      });
+    };
+    scrollElement.addEventListener("scroll", handleScroll, { passive: true });
+    setScrollPosition(scrollElement.scrollTop);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      scrollElement.removeEventListener("scroll", handleScroll);
+    };
+  }, [viewMode, activeIndex]);
+
+  useEffect(() => {
+    if (viewMode !== "project") return;
+    const container = projectScrollRef.current;
+    if (!container) return;
+    const nodes = container.querySelectorAll("[data-reveal]");
+    nodes.forEach((node) => {
+      node.classList.remove("revealed");
+    });
+    const revealVisible = () => {
+      const scrollTop = container.scrollTop;
+      const viewportHeight = container.clientHeight;
+      nodes.forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        if (node.offsetTop < scrollTop + viewportHeight * 0.95) {
+          node.classList.add("revealed");
+        }
+      });
+    };
+    revealVisible();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+          }
+        });
+      },
+      {
+        root: container,
+        threshold: 0.16,
+        rootMargin: "0px 0px -10% 0px"
+      }
+    );
+    nodes.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [viewMode, activeIndex]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKey = (event) => {
+      if (event.key === "Escape") {
+        setLightboxIndex(null);
+      } else if (event.key === "ArrowRight") {
+        setLightboxIndex((index) => {
+          if (!projectMediaList.length) return null;
+          const next = index === null ? 0 : (index + 1) % projectMediaList.length;
+          return next;
+        });
+      } else if (event.key === "ArrowLeft") {
+        setLightboxIndex((index) => {
+          if (!projectMediaList.length) return null;
+          const next = index === null ? 0 : (index - 1 + projectMediaList.length) % projectMediaList.length;
+          return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [lightboxOpen, projectMediaList.length]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -689,13 +967,419 @@ export default function GalleryApp({ projects = [] }) {
     dom.style.cursor = viewMode === "gallery" ? "crosshair" : "default";
   }, [viewMode]);
 
-  const closeProject = () => {
+  const closeProject = useCallback(() => {
+    setLightboxIndex(null);
     runtimeRef.current.internalClose?.();
-  };
+  }, []);
 
-  const navigateProject = (direction) => {
+  const navigateProject = useCallback((direction) => {
+    setLightboxIndex(null);
     runtimeRef.current.internalNavigate?.(direction);
-  };
+  }, []);
+
+  const selectProject = useCallback(
+    (nextIndex) => {
+      if (typeof nextIndex !== "number" || nextIndex === activeIndex) return;
+      runtimeRef.current.ensureAdjacentLoaded?.(nextIndex);
+      setLightboxIndex(null);
+      setActiveIndex(nextIndex);
+    },
+    [activeIndex]
+  );
+
+  const openLightboxAt = useCallback(
+    (index) => {
+      if (!projectMediaList.length) return;
+      const normalized = ((index ?? 0) + projectMediaList.length) % projectMediaList.length;
+      setLightboxIndex(normalized);
+    },
+    [projectMediaList.length]
+  );
+
+  const closeLightbox = useCallback(() => {
+    setLightboxIndex(null);
+  }, []);
+
+  const stepLightbox = useCallback(
+    (direction) => {
+      if (!projectMediaList.length) return;
+      setLightboxIndex((current) => {
+        const base = typeof current === "number" ? current : 0;
+        return (base + direction + projectMediaList.length) % projectMediaList.length;
+      });
+    },
+    [projectMediaList.length]
+  );
+
+  const handleProjectTouchStart = useCallback((event) => {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: performance.now()
+    };
+  }, []);
+
+  const handleProjectTouchEnd = useCallback(
+    (event) => {
+      if (!touchStartRef.current || event.changedTouches.length === 0) return;
+      const start = touchStartRef.current;
+      touchStartRef.current = null;
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      const dt = performance.now() - start.time;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60 && dt < 600) {
+        if (dx < 0) {
+          navigateProject(1);
+        } else {
+          navigateProject(-1);
+        }
+      }
+    },
+    [navigateProject]
+  );
+
+  const overlaySections = [];
+
+  if (heroMedia) {
+    const heroKey = `hero-${activeProject?.title || "project"}`;
+    const heroAlt = heroMedia.alt || `${activeProject?.title || "Project"} hero`;
+    overlaySections.push(
+      jsxs(
+        "section",
+        {
+          className: "project-section project-hero",
+          "data-reveal": "",
+          children: [
+            jsx("figure", {
+              className: "project-hero-frame",
+              style: { transform: `translateY(${parallaxHero}px)` },
+              children: jsx(
+                "button",
+                {
+                  type: "button",
+                  className: "project-media-trigger",
+                  onClick: () => openLightboxAt(0),
+                  children:
+                    heroMedia.kind === "video"
+                      ? jsx("video", {
+                          className: "project-hero-asset",
+                          src: heroMedia.src,
+                          muted: true,
+                          loop: true,
+                          autoPlay: true,
+                          playsInline: true
+                        })
+                      : jsx("img", {
+                          className: "project-hero-asset",
+                          src: heroMedia.src,
+                          alt: heroAlt,
+                          loading: "eager"
+                        })
+                }
+              )
+            })
+          ]
+        },
+        heroKey
+      )
+    );
+  }
+
+  if (activeProject) {
+    overlaySections.push(
+      jsxs(
+        "section",
+        {
+          className: "project-section project-header",
+          "data-reveal": "",
+          style: { transform: `translateY(${parallaxMeta}px)` },
+          children: [
+            jsx("h2", {
+              className: "project-title",
+              children: activeProject.title
+            }),
+            jsxs("div", {
+              className: "project-meta-stack",
+              children: [
+                activeProject.date
+                  ? jsx("span", { className: "project-meta-primary", children: activeProject.date }, "meta-date")
+                  : null,
+                activeProject.category
+                  ? jsx(
+                      "span",
+                      {
+                        className: "project-meta-tag",
+                        children: activeProject.category
+                      },
+                      "meta-category"
+                    )
+                  : null,
+                projectVariant
+                  ? jsx(
+                      "span",
+                      {
+                        className: "project-variant-label",
+                        children: projectVariant === "technical" ? "Technical Study" : projectVariant === "concept" ? "Conceptual Study" : "Visual Study"
+                      },
+                      "meta-variant"
+                    )
+                  : null
+              ]
+            })
+          ]
+        },
+        "header"
+      )
+    );
+  }
+
+  if (descriptionParagraphs.length > 0) {
+    overlaySections.push(
+      jsxs(
+        "section",
+        {
+          className: "project-section project-description",
+          "data-reveal": "",
+          children: descriptionParagraphs.map((paragraph, index) =>
+            jsx(
+              "p",
+              {
+                children: paragraph
+              },
+              `description-${index}`
+            )
+          )
+        },
+        "description"
+      )
+    );
+  }
+
+  const showTechnicalSection =
+    detailItems.length > 0 || projectTechnologies.length > 0 || technicalHighlights.length > 0 || projectLinks.length > 0;
+
+  if (showTechnicalSection) {
+    overlaySections.push(
+      jsxs(
+        "section",
+        {
+          className: "project-section project-technical",
+          "data-reveal": "",
+          children: [
+            jsx("h3", { children: "Technical Details" }),
+            detailItems.length
+              ? jsx(
+                  "ul",
+                  {
+                    className: "project-detail-list",
+                    children: detailItems.map((item, index) =>
+                      jsxs(
+                        "li",
+                        {
+                          children: [
+                            jsx("span", { className: "detail-label", children: item.label }),
+                            jsx("span", { className: "detail-value", children: item.value })
+                          ]
+                        },
+                        `detail-${index}`
+                      )
+                    )
+                  },
+                  "detail-list"
+                )
+              : null,
+            projectTechnologies.length
+              ? jsxs(
+                  "div",
+                  {
+                    className: "project-technology-stack",
+                    children: [
+                      jsx("span", { className: "stack-label", children: "Technologies" }),
+                      jsx("div", {
+                        className: "stack-chips",
+                        children: projectTechnologies.map((tool, index) =>
+                          jsx(
+                            "span",
+                            {
+                              className: "stack-chip",
+                              children: tool
+                            },
+                            `tech-${index}`
+                          )
+                        )
+                      })
+                    ]
+                  },
+                  "technology"
+                )
+              : null,
+            technicalHighlights.length
+              ? jsxs(
+                  "div",
+                  {
+                    className: "project-highlights",
+                    children: [
+                      jsx("span", { className: "highlights-label", children: "Highlights" }),
+                      jsx("ul", {
+                        children: technicalHighlights.map((note, index) =>
+                          jsx(
+                            "li",
+                            {
+                              children: note
+                            },
+                            `highlight-${index}`
+                          )
+                        )
+                      })
+                    ]
+                  },
+                  "highlights"
+                )
+              : null,
+            projectLinks.length
+              ? jsx(
+                  "div",
+                  {
+                    className: "project-links",
+                    children: projectLinks.map((link, index) =>
+                      jsx(
+                        "a",
+                        {
+                          href: link.url,
+                          target: "_blank",
+                          rel: "noopener noreferrer",
+                          className: "project-link",
+                          children: link.label
+                        },
+                        `link-${index}`
+                      )
+                    )
+                  },
+                  "links"
+                )
+              : null
+          ]
+        },
+        "technical"
+      )
+    );
+  }
+
+  if (galleryMedia.length > 0) {
+    overlaySections.push(
+      jsxs(
+        "section",
+        {
+          className: "project-section project-gallery",
+          "data-reveal": "",
+          children: galleryMedia.map((media, index) => {
+            const mediaAlt = media.alt || `${activeProject?.title || "Project"} detail ${index + 1}`;
+            const mediaIndex = index + 1;
+            return jsxs(
+              "figure",
+              {
+                className: "project-gallery-card",
+                style: { transform: `translateY(${parallaxGallery}px)` },
+                children: [
+                  jsx(
+                    "button",
+                    {
+                      type: "button",
+                      className: "project-media-trigger",
+                      onClick: () => openLightboxAt(mediaIndex),
+                      children:
+                        media.kind === "video"
+                          ? jsx("video", {
+                              className: "project-gallery-asset",
+                              src: media.src,
+                              muted: true,
+                              loop: true,
+                              autoPlay: true,
+                              playsInline: true
+                            })
+                          : jsx("img", {
+                              className: "project-gallery-asset",
+                              src: media.src,
+                              alt: mediaAlt,
+                              loading: "lazy"
+                            })
+                    }
+                  ),
+                  media.caption
+                    ? jsx("figcaption", {
+                        children: media.caption
+                      })
+                    : null
+                ]
+              },
+              `gallery-${media.src}-${index}`
+            );
+          })
+        },
+        "gallery"
+      )
+    );
+  }
+
+  if (relatedProjects.length > 0) {
+    overlaySections.push(
+      jsxs(
+        "section",
+        {
+          className: "project-section project-related",
+          "data-reveal": "",
+          children: [
+            jsx("h3", { children: "Related Projects" }),
+            jsx("div", {
+              className: "project-related-grid",
+              children: relatedProjects.map((entry) =>
+                jsx(
+                  "button",
+                  {
+                    type: "button",
+                    className: "project-related-card",
+                    onClick: () => selectProject(entry.index),
+                    children: [
+                      jsx("img", {
+                        src: entry.project.image,
+                        alt: entry.project.title,
+                        loading: "lazy"
+                      }),
+                      jsxs("span", {
+                        children: [
+                          entry.project.title,
+                          entry.project.category ? ` · ${entry.project.category}` : ""
+                        ]
+                      })
+                    ]
+                  },
+                  `related-${entry.index}`
+                )
+              )
+            })
+          ]
+        },
+        "related"
+      )
+    );
+  }
+
+  if (projectPositionLabel) {
+    overlaySections.push(
+      jsx(
+        "section",
+        {
+          className: "project-section project-position",
+          "data-reveal": "",
+          children: jsx("span", { children: projectPositionLabel })
+        },
+        "position"
+      )
+    );
+  }
 
   return jsxs("div", {
     className: "gallery-root",
@@ -730,51 +1414,101 @@ export default function GalleryApp({ projects = [] }) {
       }),
       jsxs("div", {
         className: "project-overlay" + (viewMode === "project" ? " active" : ""),
-        children: typeof activeIndex === "number"
+        ref: projectOverlayRef,
+        children: activeProject
           ? [
-              jsx("button", {
-                className: "project-close",
-                onClick: closeProject,
-                children: "Return"
-              }, "close"),
               jsxs("div", {
-                className: "project-media",
+                className: "project-chrome",
                 children: [
-                  jsxs("div", {
-                    className: "project-controls",
-                    children: [
-                      jsx("button", {
-                        className: "project-arrow left",
-                        onClick: () => navigateProject(-1),
-                        children: "Prev"
-                      }, "prev"),
-                      jsx("button", {
-                        className: "project-arrow right",
-                        onClick: () => navigateProject(1),
-                        children: "Next"
-                      }, "next")
-                    ]
-                  }),
-                  jsx("img", {
-                    src: projects[activeIndex].image,
-                    alt: projects[activeIndex].title,
-                    loading: "lazy"
-                  })
+                  jsx("button", {
+                    className: "project-close",
+                    onClick: closeProject,
+                    children: "Return"
+                  }, "chrome-close"),
+                  jsx("button", {
+                    className: "project-nav project-nav-prev",
+                    onClick: () => navigateProject(-1),
+                    "aria-label": "Previous project",
+                    children: "‹"
+                  }, "chrome-prev"),
+                  jsx("button", {
+                    className: "project-nav project-nav-next",
+                    onClick: () => navigateProject(1),
+                    "aria-label": "Next project",
+                    children: "›"
+                  }, "chrome-next"),
+                  jsx("span", { className: "project-position-indicator", children: projectOrdinal }, "chrome-indicator")
                 ]
-              }, "media"),
-              jsxs("div", {
-                className: "project-meta",
-                children: [
-                  jsx("h2", { children: projects[activeIndex].title }),
-                  jsx("span", {
-                    children: projects[activeIndex].date +
-                      (projects[activeIndex].category ? ` — ${projects[activeIndex].category}` : "")
-                  })
-                ]
-              }, "meta")
+              }, "chrome"),
+              jsx("div", {
+                className: "project-scroll" + overlayVariantClass,
+                ref: projectScrollRef,
+                onTouchStart: handleProjectTouchStart,
+                onTouchEnd: handleProjectTouchEnd,
+                children: overlaySections
+              }, "scroll")
             ]
           : null
       }),
+      lightboxOpen && lightboxMedia
+        ? jsxs("div", {
+            className: "project-lightbox",
+            role: "dialog",
+            "aria-modal": "true",
+            onClick: (event) => {
+              if (event.target === event.currentTarget) {
+                closeLightbox();
+              }
+            },
+            children: [
+              jsx("button", {
+                className: "project-lightbox-close",
+                onClick: closeLightbox,
+                children: "Close"
+              }, "lightbox-close"),
+              projectMediaList.length > 1
+                ? jsx("button", {
+                    className: "project-lightbox-nav prev",
+                    onClick: () => stepLightbox(-1),
+                    "aria-label": "Previous media",
+                    children: "‹"
+                  }, "lightbox-prev")
+                : null,
+                projectMediaList.length > 1
+                  ? jsx("button", {
+                      className: "project-lightbox-nav next",
+                      onClick: () => stepLightbox(1),
+                      "aria-label": "Next media",
+                      children: "›"
+                    }, "lightbox-next")
+                  : null,
+              jsxs("div", {
+                className: "project-lightbox-stage",
+                onClick: (event) => event.stopPropagation(),
+                children: [
+                  lightboxMedia.kind === "video"
+                    ? jsx("video", {
+                        src: lightboxMedia.src,
+                        controls: true,
+                        autoPlay: true,
+                        loop: true,
+                        playsInline: true
+                      })
+                    : jsx("img", {
+                        src: lightboxMedia.src,
+                        alt: lightboxMedia.alt || `${activeProject?.title || "Project"} media`
+                      })
+                ]
+              }, "lightbox-stage"),
+              lightboxMedia.caption
+                ? jsx("div", {
+                    className: "project-lightbox-caption",
+                    children: lightboxMedia.caption
+                  }, "lightbox-caption")
+                : null
+            ]
+          }, "lightbox")
+        : null,
       jsx("div", {
         className: "status-indicator",
         children: viewMode === "project" ? "Project View" : "Gallery Navigation"

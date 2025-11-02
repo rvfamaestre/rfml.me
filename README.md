@@ -28,8 +28,17 @@ All code is served as native ES modules. You can open `index.html` directly in a
    {
      title: "Parametric Skyline",
      date: "May 2025 | 9 wks",
-     category: "3D Design",   // optional tag shown in the overlay
-     image: "https://…"        // HTTPS image URL with CORS enabled
+     category: "3D Design",     // optional tag shown in the overlay
+     image: "https://…",        // HTTPS image URL with CORS enabled
+     gallery: [{ src: "https://…", caption: "Optional detail view" }],
+     description: [
+       "Short, museum-quality copy (2–4 sentences).",
+       "You can supply multiple strings; each becomes a paragraph."
+     ],
+     technologies: ["Rhino", "Grasshopper", "Unreal Engine"],
+     highlights: ["Key challenge solved", "Notable metric or outcome"],
+     links: [{ label: "Process Journal", url: "https://…" }],
+     variant: "visual"          // optional: visual | technical | concept
    }
    ```
 
@@ -38,6 +47,7 @@ All code is served as native ES modules. You can open `index.html` directly in a
 **Tips**
 - Prefer high-resolution images served over HTTPS (Unsplash, your CDN, etc.).
 - Keep titles concise; anything too wide will be wrapped inside the frame label.
+- Supplying optional fields (`gallery`, `description`, `technologies`, `highlights`, `links`) automatically enriches the private viewing room and lightbox experience.
 - The gallery is deterministic – no random collisions – so you don’t need to tweak positioning when the list grows.
 
 ## Customising the look
