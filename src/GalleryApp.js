@@ -48,48 +48,68 @@ const summarizeReadme = (markdown, limit = 700) => {
   return `${safeSlice.trim()}…`;
 };
 
-const buildTreePreview = (entries, options = {}) => {
+const buildTreeStructure = (entries, options = {}) => {
   if (!Array.isArray(entries) || entries.length === 0) return [];
-  const maxTop = options.maxTop || 8;
-  const maxChildren = options.maxChildren || 4;
-  const maxEntries = options.maxEntries || 400;
-  const summaryMap = new Map();
-  const limitedEntries = entries.slice(0, maxEntries);
+  const maxEntries =
+    typeof options.maxEntries === "number" && options.maxEntries > 0 ? options.maxEntries : null;
+  const limitedEntries = maxEntries ? entries.slice(0, maxEntries) : entries;
+  const root = {};
+
+  const ensureNode = (container, name, path, type) => {
+    if (!container[name]) {
+      container[name] = {
+        name,
+        path,
+        type,
+        children: {}
+      };
+    } else if (type === "dir") {
+      container[name].type = "dir";
+    }
+    return container[name];
+  };
 
   limitedEntries.forEach((entry) => {
     if (!entry || !entry.path) return;
-    const segments = entry.path.split("/");
-    const top = segments[0];
-    if (!top) return;
-    const bucket =
-      summaryMap.get(top) || {
-        name: top,
-        type: entry.type === "tree" || segments.length > 1 ? "dir" : "file",
-        children: []
-      };
-    if ((entry.type === "tree" || segments.length > 1) && bucket.type !== "dir") {
-      bucket.type = "dir";
-    }
-    if (segments.length > 1 && bucket.children.length < maxChildren) {
-      const childName = segments[1];
-      const childType = segments.length > 2 || entry.type === "tree" ? "dir" : "file";
-      const exists = bucket.children.some((child) => child.name === childName);
-      if (!exists) {
-        bucket.children.push({
-          name: childName,
-          type: childType
-        });
+    const segments = entry.path.split("/").filter(Boolean);
+    if (segments.length === 0) return;
+    let pointer = root;
+    let currentPath = "";
+    segments.forEach((segment, index) => {
+      currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+      const isLeaf = index === segments.length - 1;
+      const kind = isLeaf && entry.type !== "tree" ? "file" : "dir";
+      const node = ensureNode(pointer, segment, currentPath, kind);
+      if (!isLeaf) {
+        pointer = node.children;
       }
-    }
-    summaryMap.set(top, bucket);
+    });
   });
 
-  return Array.from(summaryMap.values())
-    .sort((a, b) => {
-      if (a.type === b.type) return a.name.localeCompare(b.name);
-      return a.type === "dir" ? -1 : 1;
-    })
-    .slice(0, maxTop);
+  const convertMapToArray = (nodeMap) =>
+    Object.values(nodeMap)
+      .sort((a, b) => {
+        if (a.type === b.type) return a.name.localeCompare(b.name);
+        return a.type === "dir" ? -1 : 1;
+      })
+      .map((node) => ({
+        name: node.name,
+        path: node.path,
+        type: node.type,
+        children: node.type === "dir" ? convertMapToArray(node.children) : []
+      }));
+
+  return convertMapToArray(root);
+};
+
+const extractHostname = (url) => {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace(/^www\./i, "");
+  } catch (error) {
+    return "";
+  }
 };
 
 const formatGithubUpdated = (value) => {
@@ -111,6 +131,7 @@ export default function GalleryApp({ projects = [] }) {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [, forceGithubRerender] = useState(0);
+  const [treeExpansionState, setTreeExpansionState] = useState({});
 
   const runtimeRef = useRef({
     scene: null,
@@ -333,8 +354,107 @@ export default function GalleryApp({ projects = [] }) {
   const githubReadme = githubData?.readme || null;
   const githubReadmeExcerpt = githubReadme?.excerpt || "";
   const githubReadmeUrl = githubReadme?.url || (githubUrl ? `${githubUrl}/blob/${githubBranchSlug}/README.md` : "");
-  const githubTreePreview = githubData?.treePreview || [];
+  const githubTreeStructure = githubData?.treeStructure || [];
   const githubFilesUrl = githubData?.filesUrl || (githubUrl ? `${githubUrl}/tree/${githubBranchSlug}` : "");
+  const repoTreeExpansion = useMemo(
+    () => (githubConfig?.repo ? treeExpansionState[githubConfig.repo] || {} : {}),
+    [githubConfig?.repo, treeExpansionState]
+  );
+
+  const isTreeNodeExpanded = useCallback(
+    (path, depth = 0) => {
+      if (!path) return false;
+      if (repoTreeExpansion[path] !== undefined) {
+        return repoTreeExpansion[path];
+      }
+      return depth === 0;
+    },
+    [repoTreeExpansion]
+  );
+
+  const handleTreeToggle = useCallback(
+    (path, depth = 0) => {
+      if (!githubConfig?.repo || !path) return;
+      setTreeExpansionState((prev) => {
+        const repoKey = githubConfig.repo;
+        const repoState = prev[repoKey] || {};
+        const current = repoState[path];
+        const resolvedCurrent = typeof current === "boolean" ? current : depth === 0;
+        return {
+          ...prev,
+          [repoKey]: {
+            ...repoState,
+            [path]: !resolvedCurrent
+          }
+        };
+      });
+    },
+    [githubConfig?.repo]
+  );
+
+  const renderGithubTree = useCallback(
+    (nodes, depth = 0) => {
+      if (!nodes || nodes.length === 0) return null;
+      const listClass = depth === 0 ? "github-tree" : "github-tree__children";
+      return jsx(
+        "ul",
+        {
+          className: listClass,
+          children: nodes.map((node) => {
+            const isDir = node.type === "dir";
+            const nodePath = node.path;
+            const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+            const expanded = isDir ? isTreeNodeExpanded(nodePath, depth) : false;
+            const nodeHref =
+              githubUrl && nodePath
+                ? `${githubUrl}/${isDir ? "tree" : "blob"}/${githubBranchSlug}/${nodePath}`
+                : undefined;
+            return jsxs(
+              "li",
+              {
+                className: "github-tree__node",
+                children: [
+                  jsxs("div", {
+                    className: "github-tree__entry",
+                    children: [
+                      isDir
+                        ? jsx("button", {
+                            type: "button",
+                            className: `github-tree__toggle${expanded ? " is-open" : ""}`,
+                            onClick: () => handleTreeToggle(nodePath, depth),
+                            "aria-label": `${expanded ? "Collapse" : "Expand"} ${node.name}`,
+                            disabled: !hasChildren
+                          })
+                        : jsx("span", { className: "github-tree__spacer" }),
+                      jsx("span", {
+                        className: `github-tree__icon github-tree__icon--${isDir ? "dir" : "file"}`
+                      }),
+                      nodeHref
+                        ? jsx("a", {
+                            className: "github-tree__name",
+                            href: nodeHref,
+                            target: "_blank",
+                            rel: "noopener noreferrer",
+                            children: isDir ? `${node.name}/` : node.name
+                          })
+                        : jsx("span", {
+                            className: "github-tree__name",
+                            children: isDir ? `${node.name}/` : node.name
+                          })
+                    ]
+                  }),
+                  isDir && expanded && hasChildren ? renderGithubTree(node.children, depth + 1) : null
+                ]
+              },
+              node.path || `${node.name}-${depth}`
+            );
+          })
+        },
+        `github-tree-level-${depth}`
+      );
+    },
+    [githubBranchSlug, githubUrl, handleTreeToggle, isTreeNodeExpanded]
+  );
 
   useEffect(() => {
     const repo = githubConfig?.repo;
@@ -390,7 +510,7 @@ export default function GalleryApp({ projects = [] }) {
           readmeData = readmeData || null;
         }
 
-        let treePreview = [];
+        let treeStructure = [];
         try {
           const treeResponse = await fetch(
             `https://api.github.com/repos/${repo}/git/trees/${encodedBranch}?recursive=1`,
@@ -398,12 +518,12 @@ export default function GalleryApp({ projects = [] }) {
           );
           if (treeResponse.ok) {
             const treeJson = await treeResponse.json();
-            treePreview = buildTreePreview(treeJson.tree || []);
+            treeStructure = buildTreeStructure(treeJson.tree || []);
           } else if (treeResponse.status !== 404) {
             throw new Error(`Tree request failed (${treeResponse.status})`);
           }
         } catch (error) {
-          treePreview = [];
+          treeStructure = [];
         }
 
         githubCacheRef.current[repo] = {
@@ -418,7 +538,7 @@ export default function GalleryApp({ projects = [] }) {
             updatedAt: repoPayload.updated_at || "",
             license: repoPayload.license?.spdx_id || repoPayload.license?.name || "",
             readme: readmeData,
-            treePreview
+            treeStructure
           }
         };
         forceGithubRerender((value) => value + 1);
@@ -1625,56 +1745,8 @@ export default function GalleryApp({ projects = [] }) {
                                         className: "github-widget__card-label",
                                         children: "Structure Preview"
                                       }),
-                                      githubTreePreview.length
-                                        ? jsx(
-                                            "ul",
-                                            {
-                                              className: "github-tree",
-                                              children: githubTreePreview.map((entry) =>
-                                                jsxs(
-                                                  "li",
-                                                  {
-                                                    children: [
-                                                      jsxs("div", {
-                                                        className: "github-tree__entry",
-                                                        children: [
-                                                          jsx("span", {
-                                                            className: `github-tree__icon github-tree__icon--${entry.type}`
-                                                          }),
-                                                          jsx("span", {
-                                                            className: "github-tree__name",
-                                                            children: entry.type === "dir" ? `${entry.name}/` : entry.name
-                                                          })
-                                                        ]
-                                                      }),
-                                                      entry.children.length
-                                                        ? jsx(
-                                                            "ul",
-                                                            {
-                                                              className: "github-tree__children",
-                                                              children: entry.children.map((child) =>
-                                                                jsx(
-                                                                  "li",
-                                                                  {
-                                                                    children: jsx("span", {
-                                                                      className: `github-tree__child github-tree__child--${child.type}`,
-                                                                      children: child.type === "dir" ? `${child.name}/` : child.name
-                                                                    })
-                                                                  },
-                                                                  `${entry.name}-${child.name}`
-                                                                )
-                                                              )
-                                                            }
-                                                          )
-                                                        : null
-                                                    ]
-                                                  },
-                                                  `github-tree-${entry.name}`
-                                                )
-                                              )
-                                            },
-                                            "github-tree-list"
-                                          )
+                                      githubTreeStructure.length
+                                        ? renderGithubTree(githubTreeStructure)
                                         : jsx("p", {
                                             className: "github-widget__empty",
                                             children: "Repository files will appear once the tree is available."
@@ -1729,28 +1801,6 @@ export default function GalleryApp({ projects = [] }) {
                   "github-card"
                 )
               : null,
-            projectLinks.length
-              ? jsx(
-                  "div",
-                  {
-                    className: "project-links",
-                    children: projectLinks.map((link, index) =>
-                      jsx(
-                        "a",
-                        {
-                          href: link.url,
-                          target: "_blank",
-                          rel: "noopener noreferrer",
-                          className: "project-link",
-                          children: link.label
-                        },
-                        `link-${index}`
-                      )
-                    )
-                  },
-                  "links"
-                )
-              : null
           ]
         },
         "technical"
@@ -1853,6 +1903,48 @@ export default function GalleryApp({ projects = [] }) {
           ]
         },
         "related"
+      )
+    );
+  }
+
+  if (projectLinks.length > 0) {
+    overlaySections.push(
+      jsxs(
+        "section",
+        {
+          className: "project-section project-links-section",
+          "data-reveal": "",
+          children: [
+            jsx("h3", { children: "Key Links" }),
+            jsx("div", {
+              className: "project-links-grid",
+              children: projectLinks.map((link, index) => {
+                const linkHost = extractHostname(link.url);
+                return jsxs(
+                  "a",
+                  {
+                    className: "project-link-card",
+                    href: link.url,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    children: [
+                      jsx("span", {
+                        className: "project-link-card__label",
+                        children: linkHost || "Resource"
+                      }),
+                      jsx("span", {
+                        className: "project-link-card__cta",
+                        children: link.label
+                      })
+                    ]
+                  },
+                  `project-link-${index}`
+                );
+              })
+            })
+          ]
+        },
+        "project-links"
       )
     );
   }
