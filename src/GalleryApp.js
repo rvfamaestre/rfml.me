@@ -3,28 +3,93 @@ import { jsx, jsxs } from "https://cdn.jsdelivr.net/npm/react@18.2.0/jsx-runtime
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 import { easeStandard, easeDramatic } from "./utils/easings.js";
 
-const compactNumberFormatter = new Intl.NumberFormat("en", {
-  notation: "compact",
-  compactDisplay: "short",
-  maximumFractionDigits: 1
-});
-
-const plainNumberFormatter = new Intl.NumberFormat("en", {
-  maximumFractionDigits: 0
-});
-
 const updatedDateFormatter = new Intl.DateTimeFormat("en", {
   month: "short",
   day: "numeric",
   year: "numeric"
 });
 
-const formatGithubCount = (value) => {
-  if (typeof value !== "number" || Number.isNaN(value)) return "—";
-  if (value >= 1000) {
-    return compactNumberFormatter.format(value);
+const textDecoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf-8") : null;
+
+const decodeBase64 = (input) => {
+  if (!input) return "";
+  try {
+    const sanitized = input.replace(/\s/g, "");
+    if (typeof globalThis !== "undefined" && typeof globalThis.atob === "function") {
+      const binary = globalThis.atob(sanitized);
+      if (textDecoder) {
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return textDecoder.decode(bytes);
+      }
+      return binary;
+    }
+  } catch (error) {
+    // Ignore decoding issues and fall through
   }
-  return plainNumberFormatter.format(value);
+  return "";
+};
+
+const summarizeReadme = (markdown, limit = 700) => {
+  if (!markdown) return "";
+  const normalized = String(markdown)
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[[^\]]*]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)]\([^)]*\)/g, "$1")
+    .replace(/#+\s*/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/_/g, "")
+    .replace(/\r/g, "")
+    .trim();
+  if (normalized.length <= limit) return normalized;
+  const truncated = normalized.slice(0, limit);
+  const lastSpace = truncated.lastIndexOf(" ");
+  const safeSlice = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
+  return `${safeSlice.trim()}…`;
+};
+
+const buildTreePreview = (entries, options = {}) => {
+  if (!Array.isArray(entries) || entries.length === 0) return [];
+  const maxTop = options.maxTop || 8;
+  const maxChildren = options.maxChildren || 4;
+  const maxEntries = options.maxEntries || 400;
+  const summaryMap = new Map();
+  const limitedEntries = entries.slice(0, maxEntries);
+
+  limitedEntries.forEach((entry) => {
+    if (!entry || !entry.path) return;
+    const segments = entry.path.split("/");
+    const top = segments[0];
+    if (!top) return;
+    const bucket =
+      summaryMap.get(top) || {
+        name: top,
+        type: entry.type === "tree" || segments.length > 1 ? "dir" : "file",
+        children: []
+      };
+    if ((entry.type === "tree" || segments.length > 1) && bucket.type !== "dir") {
+      bucket.type = "dir";
+    }
+    if (segments.length > 1 && bucket.children.length < maxChildren) {
+      const childName = segments[1];
+      const childType = segments.length > 2 || entry.type === "tree" ? "dir" : "file";
+      const exists = bucket.children.some((child) => child.name === childName);
+      if (!exists) {
+        bucket.children.push({
+          name: childName,
+          type: childType
+        });
+      }
+    }
+    summaryMap.set(top, bucket);
+  });
+
+  return Array.from(summaryMap.values())
+    .sort((a, b) => {
+      if (a.type === b.type) return a.name.localeCompare(b.name);
+      return a.type === "dir" ? -1 : 1;
+    })
+    .slice(0, maxTop);
 };
 
 const formatGithubUpdated = (value) => {
@@ -257,19 +322,19 @@ export default function GalleryApp({ projects = [] }) {
   const githubRepoLabel = githubData?.fullName || githubConfig?.repo || "";
   const githubUrl = githubData?.url || githubConfig?.url || (githubConfig ? `https://github.com/${githubConfig.repo}` : "");
   const githubDescription =
-    githubData?.description || githubConfig?.description || "Live repository telemetry for this build.";
+    githubData?.description ||
+    githubConfig?.description ||
+    "Live snapshot of the repository documentation and file structure.";
   const githubBranchLabel = githubData?.defaultBranch || githubConfig?.branch || "main";
+  const githubBranchSlug = encodeURIComponent(githubBranchLabel);
   const githubLicenseLabel = githubData?.license || "";
   const githubLanguageLabel = githubData?.language || "";
   const githubUpdatedLabel = githubData?.updatedAt ? formatGithubUpdated(githubData.updatedAt) : null;
-  const githubMetrics = githubData
-    ? [
-        { label: "Stars", value: githubData.stars ?? 0 },
-        { label: "Forks", value: githubData.forks ?? 0 },
-        { label: "Watchers", value: githubData.watchers ?? 0 },
-        { label: "Open Issues", value: githubData.issues ?? 0 }
-      ]
-    : [];
+  const githubReadme = githubData?.readme || null;
+  const githubReadmeExcerpt = githubReadme?.excerpt || "";
+  const githubReadmeUrl = githubReadme?.url || (githubUrl ? `${githubUrl}/blob/${githubBranchSlug}/README.md` : "");
+  const githubTreePreview = githubData?.treePreview || [];
+  const githubFilesUrl = githubData?.filesUrl || (githubUrl ? `${githubUrl}/tree/${githubBranchSlug}` : "");
 
   useEffect(() => {
     const repo = githubConfig?.repo;
@@ -282,53 +347,99 @@ export default function GalleryApp({ projects = [] }) {
     githubCacheRef.current[repo] = { status: "loading" };
     forceGithubRerender((value) => value + 1);
 
-    fetch(`https://api.github.com/repos/${repo}`, {
+    const fetchOptions = {
       headers: {
         Accept: "application/vnd.github+json"
       },
       signal: controller?.signal
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`GitHub request failed (${response.status})`);
+    };
+
+    const loadGithubData = async () => {
+      try {
+        const repoResponse = await fetch(`https://api.github.com/repos/${repo}`, fetchOptions);
+        if (!repoResponse.ok) {
+          throw new Error(`GitHub request failed (${repoResponse.status})`);
         }
-        return response.json();
-      })
-      .then((payload) => {
+        const repoPayload = await repoResponse.json();
         if (cancelled) return;
+
+        const branchName = githubConfig?.branch || repoPayload.default_branch || "main";
+        const repoHtmlUrl = repoPayload.html_url || githubConfig?.url || `https://github.com/${repo}`;
+        const encodedBranch = encodeURIComponent(branchName);
+        const filesUrl = `${repoHtmlUrl}/tree/${encodedBranch}`;
+
+        let readmeData = null;
+        try {
+          const readmeResponse = await fetch(
+            `https://api.github.com/repos/${repo}/readme?ref=${encodedBranch}`,
+            fetchOptions
+          );
+          if (readmeResponse.ok) {
+            const readmeJson = await readmeResponse.json();
+            const readmeText = decodeBase64(readmeJson.content || "");
+            readmeData = {
+              text: readmeText,
+              excerpt: summarizeReadme(readmeText),
+              path: readmeJson.path || "README.md",
+              url: readmeJson.html_url || `${repoHtmlUrl}/blob/${encodedBranch}/${readmeJson.path || "README.md"}`
+            };
+          } else if (readmeResponse.status !== 404) {
+            throw new Error(`README request failed (${readmeResponse.status})`);
+          }
+        } catch (error) {
+          readmeData = readmeData || null;
+        }
+
+        let treePreview = [];
+        try {
+          const treeResponse = await fetch(
+            `https://api.github.com/repos/${repo}/git/trees/${encodedBranch}?recursive=1`,
+            fetchOptions
+          );
+          if (treeResponse.ok) {
+            const treeJson = await treeResponse.json();
+            treePreview = buildTreePreview(treeJson.tree || []);
+          } else if (treeResponse.status !== 404) {
+            throw new Error(`Tree request failed (${treeResponse.status})`);
+          }
+        } catch (error) {
+          treePreview = [];
+        }
+
         githubCacheRef.current[repo] = {
           status: "loaded",
           data: {
-            fullName: payload.full_name || repo,
-            description: payload.description || githubConfig?.description || "",
-            stars: payload.stargazers_count ?? 0,
-            forks: payload.forks_count ?? 0,
-            issues: payload.open_issues_count ?? 0,
-            watchers: payload.subscribers_count ?? payload.watchers_count ?? 0,
-            language: payload.language || "",
-            updatedAt: payload.updated_at || "",
-            license: payload.license?.spdx_id || payload.license?.name || "",
-            defaultBranch: payload.default_branch || githubConfig?.branch || "main",
-            url: payload.html_url || githubConfig?.url || `https://github.com/${repo}`
+            fullName: repoPayload.full_name || repo,
+            description: repoPayload.description || githubConfig?.description || "",
+            defaultBranch: branchName,
+            url: repoHtmlUrl,
+            filesUrl,
+            language: repoPayload.language || "",
+            updatedAt: repoPayload.updated_at || "",
+            license: repoPayload.license?.spdx_id || repoPayload.license?.name || "",
+            readme: readmeData,
+            treePreview
           }
         };
         forceGithubRerender((value) => value + 1);
-      })
-      .catch((error) => {
+      } catch (error) {
         if (cancelled) return;
         githubCacheRef.current[repo] = {
           status: "error",
           error: error?.message || "Unable to load repository data."
         };
         forceGithubRerender((value) => value + 1);
-      });
+      }
+    };
+
+    loadGithubData();
     return () => {
       cancelled = true;
       if (controller) {
         controller.abort();
       }
     };
-  }, [githubConfig?.repo]);
+  }, [githubConfig?.repo, githubConfig?.branch, githubConfig?.description, githubConfig?.url]);
 
   const handleGithubRetry = useCallback(() => {
     if (!githubConfig?.repo) return;
@@ -1456,60 +1567,163 @@ export default function GalleryApp({ projects = [] }) {
                             "div",
                             {
                               className: "github-widget__status",
-                              children: "Fetching live GitHub stats…"
+                              children: "Fetching repository structure…"
                             },
                             "github-loading"
                           )
                         : null,
-                      displayGithubStatus === "loaded" && githubMetrics.length
-                        ? jsx(
+                      displayGithubStatus === "loaded"
+                        ? jsxs(
                             "div",
                             {
-                              className: "github-widget__metrics",
-                              children: githubMetrics.map((metric) =>
+                              className: "github-widget__content",
+                              children: [
                                 jsxs(
                                   "div",
                                   {
-                                    className: "github-widget__metric",
+                                    className: `github-widget__card github-widget__card--readme${
+                                      githubReadmeExcerpt ? "" : " github-widget__card--empty"
+                                    }`,
                                     children: [
-                                      jsx("span", {
-                                        className: "github-widget__metric-value",
-                                        children: formatGithubCount(metric.value)
+                                      jsx("div", {
+                                        className: "github-widget__card-label",
+                                        children: "README Snapshot"
                                       }),
-                                      jsx("span", {
-                                        className: "github-widget__metric-label",
-                                        children: metric.label
-                                      })
+                                      jsx("p", {
+                                        className: "github-widget__card-text",
+                                        children:
+                                          githubReadmeExcerpt ||
+                                          (githubReadme
+                                            ? "Open the README to explore the documentation."
+                                            : "README content will appear once the repository has a README.md.")
+                                      }),
+                                      githubReadmeUrl
+                                        ? jsx(
+                                            "a",
+                                            {
+                                              href: githubReadmeUrl,
+                                              target: "_blank",
+                                              rel: "noopener noreferrer",
+                                              className: "github-widget__inline-link",
+                                              children: "Open README"
+                                            },
+                                            "github-readme-link"
+                                          )
+                                        : null
                                     ]
                                   },
-                                  `github-metric-${metric.label}`
+                                  "github-readme"
+                                ),
+                                jsxs(
+                                  "div",
+                                  {
+                                    className: `github-widget__card github-widget__card--tree${
+                                      githubTreePreview.length ? "" : " github-widget__card--empty"
+                                    }`,
+                                    children: [
+                                      jsx("div", {
+                                        className: "github-widget__card-label",
+                                        children: "Structure Preview"
+                                      }),
+                                      githubTreePreview.length
+                                        ? jsx(
+                                            "ul",
+                                            {
+                                              className: "github-tree",
+                                              children: githubTreePreview.map((entry) =>
+                                                jsxs(
+                                                  "li",
+                                                  {
+                                                    children: [
+                                                      jsxs("div", {
+                                                        className: "github-tree__entry",
+                                                        children: [
+                                                          jsx("span", {
+                                                            className: `github-tree__icon github-tree__icon--${entry.type}`
+                                                          }),
+                                                          jsx("span", {
+                                                            className: "github-tree__name",
+                                                            children: entry.type === "dir" ? `${entry.name}/` : entry.name
+                                                          })
+                                                        ]
+                                                      }),
+                                                      entry.children.length
+                                                        ? jsx(
+                                                            "ul",
+                                                            {
+                                                              className: "github-tree__children",
+                                                              children: entry.children.map((child) =>
+                                                                jsx(
+                                                                  "li",
+                                                                  {
+                                                                    children: jsx("span", {
+                                                                      className: `github-tree__child github-tree__child--${child.type}`,
+                                                                      children: child.type === "dir" ? `${child.name}/` : child.name
+                                                                    })
+                                                                  },
+                                                                  `${entry.name}-${child.name}`
+                                                                )
+                                                              )
+                                                            }
+                                                          )
+                                                        : null
+                                                    ]
+                                                  },
+                                                  `github-tree-${entry.name}`
+                                                )
+                                              )
+                                            },
+                                            "github-tree-list"
+                                          )
+                                        : jsx("p", {
+                                            className: "github-widget__empty",
+                                            children: "Repository files will appear once the tree is available."
+                                          }),
+                                      githubFilesUrl
+                                        ? jsx(
+                                            "a",
+                                            {
+                                              href: githubFilesUrl,
+                                              target: "_blank",
+                                              rel: "noopener noreferrer",
+                                              className: "github-widget__inline-link",
+                                              children: "Browse Files"
+                                            },
+                                            "github-files-link"
+                                          )
+                                        : null
+                                    ]
+                                  },
+                                  "github-tree-card"
                                 )
-                              )
+                              ]
                             },
-                            "github-metrics"
+                            "github-content"
                           )
                         : null,
-                      jsxs(
-                        "div",
-                        {
-                          className: "github-widget__footer",
-                          children: [
-                            jsx("span", {
-                              children: githubLanguageLabel || "Polyglot stack"
-                            }),
-                            githubUpdatedLabel
-                              ? jsx(
-                                  "span",
-                                  {
-                                    children: `Updated ${githubUpdatedLabel}`
-                                  },
-                                  "github-updated"
-                                )
-                              : null
-                          ]
-                        },
-                        "github-footer"
-                      )
+                      displayGithubStatus === "loaded" && (githubLanguageLabel || githubUpdatedLabel)
+                        ? jsxs(
+                            "div",
+                            {
+                              className: "github-widget__footer",
+                              children: [
+                                jsx("span", {
+                                  children: githubLanguageLabel || "Polyglot stack"
+                                }),
+                                githubUpdatedLabel
+                                  ? jsx(
+                                      "span",
+                                      {
+                                        children: `Updated ${githubUpdatedLabel}`
+                                      },
+                                      "github-updated"
+                                    )
+                                  : null
+                              ]
+                            },
+                            "github-footer"
+                          )
+                        : null
                     ]
                   },
                   "github-card"
