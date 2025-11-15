@@ -438,6 +438,7 @@ canvas {
   display: flex;
   flex-wrap: wrap;
   gap: 0.9rem;
+  margin-top: 1.2rem;
 }
 
 .project-link {
@@ -465,6 +466,211 @@ canvas {
 
 .project-link:hover::after {
   transform: scaleX(1);
+}
+
+.github-widget {
+  position: relative;
+  margin-top: 1.6rem;
+  padding: 1.5rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0)) #fdfdfd;
+  box-shadow: 0 28px 50px -32px rgba(15, 23, 42, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  isolation: isolate;
+}
+
+.github-widget[data-state="error"] {
+  border-color: rgba(180, 35, 24, 0.4);
+}
+
+.github-widget[data-state="loading"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  animation: github-widget-sheen 2.4s ease-in-out infinite;
+}
+
+@keyframes github-widget-sheen {
+  0% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+
+.github-widget__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.github-widget__logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.github-widget__logo svg {
+  width: 26px;
+  height: 26px;
+  fill: #0f172a;
+}
+
+.github-widget__meta {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.github-widget__repo {
+  text-decoration: none;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.github-widget__repo:hover {
+  text-decoration: underline;
+}
+
+.github-widget__branch {
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.github-widget__cta {
+  border: 1px solid rgba(15, 23, 42, 0.25);
+  border-radius: 999px;
+  padding: 0.4rem 1.1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #0f172a;
+  transition: all 220ms ease;
+}
+
+.github-widget__cta:hover {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+
+.github-widget__description {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.7);
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.github-widget__status {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px dashed rgba(15, 23, 42, 0.3);
+  border-radius: 0.9rem;
+  padding: 0.75rem 1rem;
+  color: rgba(15, 23, 42, 0.65);
+  text-align: center;
+}
+
+.github-widget__status--error {
+  border-color: rgba(180, 35, 24, 0.45);
+  color: #b42318;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.github-widget__retry {
+  background: none;
+  border: 1px solid rgba(180, 35, 24, 0.5);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #b42318;
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+
+.github-widget__retry:hover {
+  background: rgba(180, 35, 24, 0.08);
+}
+
+.github-widget__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.8rem;
+}
+
+.github-widget__metric {
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  background: rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.github-widget__metric-value {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.github-widget__metric-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.55);
+}
+
+.github-widget__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.6);
+}
+
+.github-widget__footer span {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .github-widget__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .github-widget__cta {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .project-gallery {

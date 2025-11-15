@@ -3,6 +3,37 @@ import { jsx, jsxs } from "https://cdn.jsdelivr.net/npm/react@18.2.0/jsx-runtime
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 import { easeStandard, easeDramatic } from "./utils/easings.js";
 
+const compactNumberFormatter = new Intl.NumberFormat("en", {
+  notation: "compact",
+  compactDisplay: "short",
+  maximumFractionDigits: 1
+});
+
+const plainNumberFormatter = new Intl.NumberFormat("en", {
+  maximumFractionDigits: 0
+});
+
+const updatedDateFormatter = new Intl.DateTimeFormat("en", {
+  month: "short",
+  day: "numeric",
+  year: "numeric"
+});
+
+const formatGithubCount = (value) => {
+  if (typeof value !== "number" || Number.isNaN(value)) return "—";
+  if (value >= 1000) {
+    return compactNumberFormatter.format(value);
+  }
+  return plainNumberFormatter.format(value);
+};
+
+const formatGithubUpdated = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return updatedDateFormatter.format(parsed);
+};
+
 export default function GalleryApp({ projects = [] }) {
   const containerRef = useRef(null);
   const labelsLayerRef = useRef(null);
@@ -14,6 +45,7 @@ export default function GalleryApp({ projects = [] }) {
   const [isSceneReady, setSceneReady] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [, forceGithubRerender] = useState(0);
 
   const runtimeRef = useRef({
     scene: null,
@@ -52,6 +84,7 @@ export default function GalleryApp({ projects = [] }) {
     homeLookTarget: null,
     orientationFlip: null
   });
+  const githubCacheRef = useRef({});
 
   const totalProjects = projects.length;
 
@@ -197,6 +230,111 @@ export default function GalleryApp({ projects = [] }) {
         url: item.url
       }));
   }, [activeProject]);
+
+  const githubConfig = useMemo(() => {
+    if (!activeProject?.github) return null;
+    const repoCandidate = activeProject.github.repo || activeProject.github.url || "";
+    const trimmed = String(repoCandidate).trim();
+    if (!trimmed) return null;
+    const normalized = trimmed
+      .replace(/^https?:\/\/github\.com\//i, "")
+      .replace(/\.git$/i, "")
+      .replace(/\/+$/, "");
+    if (!normalized) return null;
+    return {
+      repo: normalized,
+      url: activeProject.github.url || `https://github.com/${normalized}`,
+      description: activeProject.github.description || "",
+      branch: activeProject.github.branch || "main"
+    };
+  }, [activeProject]);
+
+  const githubEntry = githubConfig ? githubCacheRef.current[githubConfig.repo] : null;
+  const githubStatus = githubEntry?.status || "idle";
+  const githubData = githubEntry?.data || null;
+  const githubError = githubEntry?.error || "";
+  const displayGithubStatus = githubConfig && githubStatus === "idle" ? "loading" : githubStatus;
+  const githubRepoLabel = githubData?.fullName || githubConfig?.repo || "";
+  const githubUrl = githubData?.url || githubConfig?.url || (githubConfig ? `https://github.com/${githubConfig.repo}` : "");
+  const githubDescription =
+    githubData?.description || githubConfig?.description || "Live repository telemetry for this build.";
+  const githubBranchLabel = githubData?.defaultBranch || githubConfig?.branch || "main";
+  const githubLicenseLabel = githubData?.license || "";
+  const githubLanguageLabel = githubData?.language || "";
+  const githubUpdatedLabel = githubData?.updatedAt ? formatGithubUpdated(githubData.updatedAt) : null;
+  const githubMetrics = githubData
+    ? [
+        { label: "Stars", value: githubData.stars ?? 0 },
+        { label: "Forks", value: githubData.forks ?? 0 },
+        { label: "Watchers", value: githubData.watchers ?? 0 },
+        { label: "Open Issues", value: githubData.issues ?? 0 }
+      ]
+    : [];
+
+  useEffect(() => {
+    const repo = githubConfig?.repo;
+    if (!repo) return;
+    if (githubCacheRef.current[repo]) return;
+
+    let cancelled = false;
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+
+    githubCacheRef.current[repo] = { status: "loading" };
+    forceGithubRerender((value) => value + 1);
+
+    fetch(`https://api.github.com/repos/${repo}`, {
+      headers: {
+        Accept: "application/vnd.github+json"
+      },
+      signal: controller?.signal
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`GitHub request failed (${response.status})`);
+        }
+        return response.json();
+      })
+      .then((payload) => {
+        if (cancelled) return;
+        githubCacheRef.current[repo] = {
+          status: "loaded",
+          data: {
+            fullName: payload.full_name || repo,
+            description: payload.description || githubConfig?.description || "",
+            stars: payload.stargazers_count ?? 0,
+            forks: payload.forks_count ?? 0,
+            issues: payload.open_issues_count ?? 0,
+            watchers: payload.subscribers_count ?? payload.watchers_count ?? 0,
+            language: payload.language || "",
+            updatedAt: payload.updated_at || "",
+            license: payload.license?.spdx_id || payload.license?.name || "",
+            defaultBranch: payload.default_branch || githubConfig?.branch || "main",
+            url: payload.html_url || githubConfig?.url || `https://github.com/${repo}`
+          }
+        };
+        forceGithubRerender((value) => value + 1);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        githubCacheRef.current[repo] = {
+          status: "error",
+          error: error?.message || "Unable to load repository data."
+        };
+        forceGithubRerender((value) => value + 1);
+      });
+    return () => {
+      cancelled = true;
+      if (controller) {
+        controller.abort();
+      }
+    };
+  }, [githubConfig?.repo]);
+
+  const handleGithubRetry = useCallback(() => {
+    if (!githubConfig?.repo) return;
+    delete githubCacheRef.current[githubConfig.repo];
+    forceGithubRerender((value) => value + 1);
+  }, [githubConfig?.repo]);
 
   const projectOrdinal = useMemo(() => {
     if (typeof activeIndex !== "number") return "";
@@ -1237,6 +1375,144 @@ export default function GalleryApp({ projects = [] }) {
                     ]
                   },
                   "highlights"
+                )
+              : null,
+            githubConfig
+              ? jsxs(
+                  "div",
+                  {
+                    className: "github-widget",
+                    "data-state": displayGithubStatus,
+                    children: [
+                      jsxs("div", {
+                        className: "github-widget__header",
+                        children: [
+                          jsx("div", {
+                            className: "github-widget__logo",
+                            children: jsx("svg", {
+                              viewBox: "0 0 24 24",
+                              role: "img",
+                              "aria-hidden": "true",
+                              children: jsx("path", {
+                                d: "M12 2C6.48 2 2 6.53 2 12.08c0 4.45 2.87 8.22 6.84 9.55.5.1.68-.22.68-.48 0-.23-.01-.84-.01-1.64-2.78.61-3.37-1.35-3.37-1.35-.45-1.17-1.11-1.48-1.11-1.48-.91-.63.07-.62.07-.62 1 .07 1.52 1.05 1.52 1.05.9 1.56 2.37 1.11 2.95.85.09-.66.35-1.11.63-1.37-2.22-.26-4.55-1.13-4.55-5 0-1.1.39-2 1.03-2.7-.1-.26-.45-1.3.1-2.7 0 0 .84-.27 2.75 1.03A9.2 9.2 0 0 1 12 6.84c.85 0 1.7.12 2.5.35 1.9-1.3 2.74-1.03 2.74-1.03.56 1.4.21 2.44.1 2.7.64.7 1.03 1.6 1.03 2.7 0 3.87-2.33 4.73-4.56 4.99.36.32.68.94.68 1.91 0 1.37-.01 2.47-.01 2.8 0 .27.18.59.69.48A10.11 10.11 0 0 0 22 12.08C22 6.53 17.52 2 12 2z"
+                              })
+                            })
+                          }),
+                          jsxs("div", {
+                            className: "github-widget__meta",
+                            children: [
+                              jsx(
+                                "a",
+                                {
+                                  className: "github-widget__repo",
+                                  href: githubUrl,
+                                  target: "_blank",
+                                  rel: "noopener noreferrer",
+                                  children: githubRepoLabel
+                                },
+                                "repo"
+                              ),
+                              jsx("span", {
+                                className: "github-widget__branch",
+                                children: `${githubBranchLabel} branch${githubLicenseLabel ? ` • ${githubLicenseLabel}` : ""}`
+                              })
+                            ]
+                          }),
+                          jsx(
+                            "a",
+                            {
+                              href: githubUrl,
+                              target: "_blank",
+                              rel: "noopener noreferrer",
+                              className: "github-widget__cta",
+                              children: "Open Repo"
+                            },
+                            "cta"
+                          )
+                        ]
+                      }),
+                      jsx("p", { className: "github-widget__description", children: githubDescription }),
+                      displayGithubStatus === "error"
+                        ? jsxs(
+                            "div",
+                            {
+                              className: "github-widget__status github-widget__status--error",
+                              children: [
+                                jsx("span", {
+                                  children: githubError || "Unable to load repository data."
+                                }),
+                                jsx("button", {
+                                  type: "button",
+                                  className: "github-widget__retry",
+                                  onClick: handleGithubRetry,
+                                  children: "Retry"
+                                })
+                              ]
+                            },
+                            "github-error"
+                          )
+                        : displayGithubStatus === "loading"
+                        ? jsx(
+                            "div",
+                            {
+                              className: "github-widget__status",
+                              children: "Fetching live GitHub stats…"
+                            },
+                            "github-loading"
+                          )
+                        : null,
+                      displayGithubStatus === "loaded" && githubMetrics.length
+                        ? jsx(
+                            "div",
+                            {
+                              className: "github-widget__metrics",
+                              children: githubMetrics.map((metric) =>
+                                jsxs(
+                                  "div",
+                                  {
+                                    className: "github-widget__metric",
+                                    children: [
+                                      jsx("span", {
+                                        className: "github-widget__metric-value",
+                                        children: formatGithubCount(metric.value)
+                                      }),
+                                      jsx("span", {
+                                        className: "github-widget__metric-label",
+                                        children: metric.label
+                                      })
+                                    ]
+                                  },
+                                  `github-metric-${metric.label}`
+                                )
+                              )
+                            },
+                            "github-metrics"
+                          )
+                        : null,
+                      jsxs(
+                        "div",
+                        {
+                          className: "github-widget__footer",
+                          children: [
+                            jsx("span", {
+                              children: githubLanguageLabel || "Polyglot stack"
+                            }),
+                            githubUpdatedLabel
+                              ? jsx(
+                                  "span",
+                                  {
+                                    children: `Updated ${githubUpdatedLabel}`
+                                  },
+                                  "github-updated"
+                                )
+                              : null
+                          ]
+                        },
+                        "github-footer"
+                      )
+                    ]
+                  },
+                  "github-card"
                 )
               : null,
             projectLinks.length
