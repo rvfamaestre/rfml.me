@@ -196,6 +196,7 @@ export default function GalleryApp({ projects = [] }) {
     return "visual";
   }, [activeProject]);
 
+
   const projectMediaList = useMemo(() => {
     if (!activeProject) return [];
     const normalize = (entry) => {
@@ -1738,7 +1739,7 @@ export default function GalleryApp({ projects = [] }) {
                                   "div",
                                   {
                                     className: `github-widget__card github-widget__card--tree${
-                                      githubTreePreview.length ? "" : " github-widget__card--empty"
+                                      githubTreeStructure.length ? "" : " github-widget__card--empty"
                                     }`,
                                     children: [
                                       jsx("div", {
