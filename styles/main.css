@@ -49,7 +49,7 @@ button img, a > img { width: 18px; height: 18px; }
 .dock img { width: 17px; height: 17px; }
 .dock [aria-current], .dock a:hover, .dock button:hover { background: #eeeee6; opacity: .95; }
 .divider { height: 17px; width: 1px; background: #e1e1d8; margin: 0 4px; }
-.preview { position: fixed; z-index: 4; top: 0; bottom: 0; left: 0; width: 340px; display: flex; flex-direction: column; justify-content: center; gap: 26px; padding: 40px; background: #fbfaf6; border-right: 1px solid #e6e5dd; box-shadow: 14px 0 50px #302e2210; transform: translateX(-104%); transition: transform .45s cubic-bezier(.2, .8, .2, 1); }
+.preview { position: fixed; z-index: 4; top: 0; bottom: 0; right: 0; width: 340px; display: flex; flex-direction: column; justify-content: center; gap: 26px; padding: 40px; background: var(--paper); border-left: 1px solid #e7e5dc; box-shadow: -12px 0 80px #3336290f; transform: translateX(104%); transition: transform .45s cubic-bezier(.2, .8, .2, 1); }
 .preview.open { transform: none; }
 .preview:not(.open) { pointer-events: none; }
 .preview .thumb { display: none; }
@@ -107,7 +107,7 @@ figcaption { color: var(--muted); font-size: 10px; line-height: 1.5; margin-top:
   .mat, .ink .mat, .silver .mat { padding: 8px; }
   .silver { padding: 3px; }
   .paper { padding: 0; }
-  .preview { top: auto; left: 12px; right: 12px; bottom: 88px; width: auto; height: 56px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; padding: 0 16px 0 8px; border: 1px solid #e6e5dd; border-radius: 14px; box-shadow: 0 8px 30px #302e221f; opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; cursor: pointer; touch-action: pan-y pinch-zoom; }
+  .preview { top: auto; left: 12px; right: 12px; bottom: 88px; width: auto; height: 56px; background: #fbfaf6; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; padding: 0 16px 0 8px; border: 1px solid #e6e5dd; border-radius: 14px; box-shadow: 0 8px 30px #302e221f; opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; cursor: pointer; touch-action: pan-y pinch-zoom; }
   .preview.open { opacity: 1; transform: none; }
   .preview .thumb { display: block; flex: none; width: 40px; height: 40px; border-radius: 8px; overflow: hidden; background: #eeede6; }
   .preview .thumb img { width: 100%; height: 100%; object-fit: cover; }

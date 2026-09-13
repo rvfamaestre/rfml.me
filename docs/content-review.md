@@ -28,4 +28,4 @@ Son los logos oficiales de cada herramienta, con sus fuentes en `assets/tools/SO
 
 ## Móvil y escritorio
 
-Probado con Playwright en 390 x 844, 375 x 667 y 360 x 640: deslizar en los dos sentidos, límites de la primera y la última página, gesto vertical, arrastre corto, deslizar desde un cuadro y desde la barra, barra que no tapa ningún cuadro, cambiar de cuadro, tocar la barra para abrir, cerrar y fórmulas que caben en pantalla. En escritorio: panel a la izquierda al pasar el ratón, arrastrar, zoom y logos que cargan.
+Probado con Playwright en 390 x 844, 375 x 667 y 360 x 640: deslizar en los dos sentidos, límites de la primera y la última página, gesto vertical, arrastre corto, deslizar desde un cuadro y desde la barra, barra que no tapa ningún cuadro, cambiar de cuadro, tocar la barra para abrir, cerrar y fórmulas que caben en pantalla. En escritorio: panel a la derecha al pasar el ratón, arrastrar, zoom y logos que cargan.

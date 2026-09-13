@@ -2,7 +2,7 @@
 
 Personal gallery and journal for [rfml.me](https://rfml.me). Plain HTML, CSS and JavaScript, no build step. The only thing loaded from outside is KaTeX, and only when an entry has a formula.
 
-On a computer, every frame hangs on one single board, sort of like the app grid of an Apple Watch. Drag to move around and use the mouse wheel (or pinch) to zoom, up to a limit. Frames get smaller towards the edges of the screen, and each one floats and tilts a bit on its own rhythm. Hover or keyboard focus slides in a panel on the left with the details. Focusing a frame with the keyboard also brings it to the centre.
+On a computer, every frame hangs on one single board, sort of like the app grid of an Apple Watch. Drag to move around and use the mouse wheel (or pinch) to zoom, up to a limit. Frames get smaller towards the edges of the screen, and each one floats and tilts a bit on its own rhythm. Hover or keyboard focus slides in a panel on the right with the details, on the same side where entries open. Focusing a frame with the keyboard also brings it to the centre.
 
 On phones the gallery keeps its pages of four frames. Swipe left or right to change page, or tap the dots. Tap a frame once to see a small bar with its name above the menu, then tap the bar, or the frame again, to read. Entries open as a sheet from the bottom. The book icon opens the same collection in date order, and the person icon opens the about page with the CV. The pause button and the reduced motion setting of the system stop the movement.
 
