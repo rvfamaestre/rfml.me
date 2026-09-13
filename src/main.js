@@ -66,7 +66,14 @@ function renderMath(root) {
     document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${katexUrl}katex.min.css">`);
     return module.default;
   });
-  katex.then(({ render }) => blocks.forEach(block => render(block.dataset.tex, block, { displayMode: true, throwOnError: false }))).catch(() => {});
+  katex.then(async ({ render }) => {
+    blocks.forEach(block => render(block.dataset.tex, block, { displayMode: true, throwOnError: false }));
+    await document.fonts.ready;
+    blocks.forEach(block => {
+      const scale = block.clientWidth / block.scrollWidth;
+      if (scale < 1) block.style.fontSize = `${parseFloat(getComputedStyle(block).fontSize) * scale * .97}px`;
+    });
+  }).catch(() => {});
 }
 
 function hidePreview() {

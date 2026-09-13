@@ -232,7 +232,7 @@ export default [
     "body": [
       "I took it while I was starting my thesis on reinforcement learning. The assignments go from value and policy iteration to deep RL, and then PPO, RLHF and DPO."
     ],
-    "formula": "Q^*(s,a)=\\mathbb{E}\\!\\left[r+\\gamma\\max_{a\\prime}Q^*(s\\prime,a\\prime)\\mid s,a\\right]",
+    "formula": "Q^*(s,a)=\\mathbb{E}\\!\\left[r+\\gamma\\max_{a'}Q^*(s',a')\\mid s,a\\right]",
     "formulaNote": "The Bellman optimality equation. Value iteration in the first assignment is built on it. γ is the discount factor.",
     "links": [],
     "frame": "paper",

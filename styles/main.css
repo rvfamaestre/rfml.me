@@ -84,10 +84,10 @@ dialog::backdrop { background: #e5e4dc66; backdrop-filter: blur(3px); }
 .reader-art .art-image { height: auto; max-height: 300px; aspect-ratio: 4 / 5; object-fit: contain; }
 .work { margin: 30px 0; }
 .work img { display: block; width: 100%; height: auto; max-height: 460px; object-fit: contain; background: #fffefa; border: 1px solid #e7e5dc; }
-.formula { margin: 30px 0; padding: 20px 16px 14px; background: #fffefa; border: 1px solid #e7e5dc; border-radius: 3px; }
+.formula { margin: 30px 0; padding: 26px 18px 16px; background: #fffefa; border: 1px solid #e7e5dc; border-radius: 3px; }
 .formula [data-tex] { overflow-x: auto; overflow-y: hidden; text-align: center; font: 12px/1.6 ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
 .formula .katex-display { margin: 0; }
-.formula .katex { font-size: 1.12em; color: var(--ink); }
+.formula .katex { font-size: 1.5em; color: var(--ink); }
 .formula figcaption { text-align: center; }
 .cv { display: flex; align-items: center; gap: 22px; margin: 34px 0 0; padding: 14px; border: 1px solid #e7e5dc; border-radius: 3px; background: #fffefa; transition: border-color .2s; }
 .cv:hover { border-color: #cbcbc0; }
