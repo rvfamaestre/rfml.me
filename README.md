@@ -24,6 +24,7 @@ Add an object to `src/projects.js` or `src/posts.js`. Both show up in the same g
   date: '2026-09-13',
   title: 'A day worth keeping',
   subtitle: 'Where, or with who',
+  tools: ['Python', 'Notion'],
   summary: 'One short sentence for the preview.',
   body: ['A short paragraph.', 'Another one.'],
   image: 'assets/work/a-day.jpg',
@@ -37,7 +38,8 @@ Add an object to `src/projects.js` or `src/posts.js`. Both show up in the same g
 
 - `id` is the permanent address (`/#entry/a-day-worth-keeping`) and the seed of the painting.
 - `date` can be `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
-- `image`, `formula` and `links` are optional. `formula` is LaTeX, rendered with KaTeX.
+- `tools`, `image`, `formula` and `links` are optional. `formula` is LaTeX, rendered with KaTeX.
+- Each tool shows its logo from `assets/tools`. The file name is the tool name in lowercase without spaces, so `Google Calendar` is `assets/tools/googlecalendar.svg`.
 - `frame` is `oak`, `ink`, `silver` or `paper`.
 - `artSeed` changes the painting without changing the address, and `artStyle` picks the technique.
 
@@ -74,3 +76,4 @@ pdftoppm -jpeg -singlefile -scale-to-x 560 -scale-to-y -1 assets/pdfs/CV_EN_RML.
 - Formulas are rendered with [KaTeX](https://katex.org/) (MIT licence), loaded from jsDelivr.
 - Visual references: [Dennis Snellenberg](https://dennissnellenberg.com/) for spacing and restrained interaction, and [Bruno Simon](https://bruno-simon.com/) for the portfolio-as-a-place idea. The draggable board takes its idea from the Apple Watch app grid.
 - Icons: [Lucide](https://lucide.dev/), ISC licence in `assets/icons/LICENSE`.
+- Tool logos: [Simple Icons](https://simpleicons.org/) (CC0), the MATLAB one from [Devicon](https://devicon.dev/) (MIT), and a Lucide sheet icon for Excel. The logos belong to their brands.

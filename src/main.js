@@ -37,6 +37,7 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const unpainted = [];
 let paintTimer;
 const artwork = entry => `<img class="art-image" data-art="${escape(entry.id)}" alt="" draggable="false">`;
+const tools = (entry, named) => entry.tools?.length ? `<ul class="tools">${entry.tools.map(tool => `<li title="${escape(tool)}"><img src="assets/tools/${tool.toLowerCase().replace(/[^a-z0-9]/g, '')}.svg" alt="${named ? '' : escape(tool)}">${named ? escape(tool) : ''}</li>`).join('')}</ul>` : '';
 function paint(root) {
   unpainted.unshift(...root.querySelectorAll('img[data-art]'));
   clearTimeout(paintTimer);
@@ -81,7 +82,7 @@ function showPreview(entry, frame) {
   hidePreview();
   activeFrame = frame;
   frame.setAttribute('aria-expanded', 'true');
-  preview.innerHTML = `<p class="eyebrow">${dateLabel(entry.date)}</p><h2>${escape(entry.title)}</h2><p>${escape(entry.summary)}</p><a href="#entry/${escape(entry.id)}">Read more <img src="assets/icons/arrow-right.svg" alt=""></a>`;
+  preview.innerHTML = `<p class="eyebrow">${dateLabel(entry.date)}</p><h2>${escape(entry.title)}</h2><p>${escape(entry.summary)}</p>${tools(entry)}<a href="#entry/${escape(entry.id)}">Read more <img src="assets/icons/arrow-right.svg" alt=""></a>`;
   preview.hidden = false;
   const box = frame.getBoundingClientRect();
   const width = preview.offsetWidth;
@@ -340,14 +341,14 @@ function openDialog(html) {
 
 function openEntry(entry) {
   const image = safeUrl(entry.image);
-  openDialog(`<p class="eyebrow">${dateLabel(entry.date)}</p><h2 id="reader-title">${escape(entry.title)}</h2><p class="subtitle">${escape(entry.subtitle || '')}</p><figure class="reader-art">${artwork(entry)}</figure><div class="prose">${(entry.body || [entry.summary]).map(p => `<p>${escape(p)}</p>`).join('')}</div>`
+  openDialog(`<p class="eyebrow">${dateLabel(entry.date)}</p><h2 id="reader-title">${escape(entry.title)}</h2><p class="subtitle">${escape(entry.subtitle || '')}</p>${tools(entry, true)}<figure class="reader-art">${artwork(entry)}</figure><div class="prose">${(entry.body || [entry.summary]).map(p => `<p>${escape(p)}</p>`).join('')}</div>`
     + (image ? `<figure class="work"><a href="${image}" target="_blank" rel="noopener"><img src="${image}" alt="${escape(entry.imageNote || entry.title)}"></a><figcaption>${escape(entry.imageNote || '')}</figcaption></figure>` : '')
     + (entry.formula ? `<figure class="formula"><div data-tex="${escape(entry.formula)}">${escape(entry.formula)}</div><figcaption>${escape(entry.formulaNote || '')}</figcaption></figure>` : '')
     + linkList((entry.links || []).filter(item => safeUrl(item.url))));
 }
 
 function openAbout() {
-  openDialog(`<p class="eyebrow">About me</p><h2 id="reader-title">Hi, I'm Rafael.</h2><div class="prose"><p>I'm an engineering student from Spain. I did my bachelor's at ICAI in Madrid and two years at CentraleSupélec in Paris. Now I'm back at ICAI for a master's in industrial engineering.</p><p>Most of what you'll find here mixes maths and code with real stuff: traffic, robots, money. In summer 2026 I was a data science intern at Acerinox.</p><p>I also co-founded Junior Enterprise Comillas, and I'm its president.</p></div><a class="cv" href="assets/pdfs/CV_EN_RML.pdf" target="_blank" rel="noopener"><img src="assets/pdfs/cv-preview.jpg" alt="The first page of my CV"><span><strong>My CV</strong>One page, PDF</span></a>`
+  openDialog(`<p class="eyebrow">About me</p><h2 id="reader-title">Hi, I'm Rafa.</h2><div class="prose"><p>I'm an engineering student from Spain. I did my bachelor's at ICAI in Madrid and two years at CentraleSupélec in Paris. Now I'm back at ICAI for a master's in industrial engineering.</p><p>Most of what you'll find here mixes maths and code with real stuff: traffic, robots, money. In summer 2026 I was a data science intern at Acerinox.</p><p>I also co-founded Junior Enterprise Comillas, and I'm its president.</p></div><a class="cv" href="assets/pdfs/CV_EN_RML.pdf" target="_blank" rel="noopener"><img src="assets/pdfs/cv-preview.jpg" alt="The first page of my CV"><span><strong>My CV</strong>One page, PDF</span></a>`
     + linkList([{ label: 'GitHub', url: 'https://github.com/rvfamaestre' }, { label: 'LinkedIn', url: 'https://www.linkedin.com/in/rafael-maestre-lopez/' }]));
 }
 

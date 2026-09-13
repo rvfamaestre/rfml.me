@@ -72,7 +72,12 @@ dialog { color: var(--ink); background: var(--paper); border: 0; border-left: 1p
 dialog::backdrop { background: #e5e4dc66; backdrop-filter: blur(3px); }
 .close { position: absolute; top: 22px; right: 25px; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #e0dfd6; border-radius: 50%; background: transparent; }
 #reader-title { font-size: 44px; }
-.subtitle { color: var(--muted); font-size: 13px; margin-bottom: 30px; }
+.subtitle { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0; padding: 0; list-style: none; }
+.tools li { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.tools img { width: 15px; height: 15px; filter: brightness(0) opacity(.6); transition: filter .2s; }
+.tools li:hover img { filter: none; }
+.preview .tools { margin: -3px 0 17px; }
 .reader-art { margin: 30px 0; }
 .reader-art .art-image { height: auto; max-height: 300px; aspect-ratio: 4 / 5; object-fit: contain; }
 .work { margin: 30px 0; }

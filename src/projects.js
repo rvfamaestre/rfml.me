@@ -4,6 +4,10 @@ export default [
     "date": "2026-08",
     "title": "Fixing phantom traffic jams",
     "subtitle": "Bachelor's thesis · L2S lab",
+    "tools": [
+      "Python",
+      "Optuna"
+    ],
     "summary": "My thesis. An RL controller for self-driving cars that makes traffic flow smoother.",
     "body": [
       "Imagine you're on the highway and a car brakes. The next one brakes a bit more, and a few cars later everyone is stopped. There was no accident. That's a phantom traffic jam, and it's what my thesis is about.",
@@ -24,6 +28,9 @@ export default [
     "date": "2026-04",
     "title": "3D printing, three ways",
     "subtitle": "Additive manufacturing · CentraleSupélec",
+    "tools": [
+      "COMSOL"
+    ],
     "summary": "Three small studies on 3D printed parts: heat, weight and lattices.",
     "body": [
       "Three projects in one course, each one about a different side of 3D printing.",
@@ -40,6 +47,11 @@ export default [
     "date": "2026-04",
     "title": "A to-do list that plans itself",
     "subtitle": "Python · Notion",
+    "tools": [
+      "Python",
+      "Notion",
+      "Google Calendar"
+    ],
     "summary": "It takes tasks from Notion and fits them into the free gaps of the calendar.",
     "body": [
       "The script reads tasks from Notion, sorts them by urgency and priority, and finds free time between calendar events.",
@@ -91,6 +103,10 @@ export default [
     "date": "2024-11",
     "title": "A puzzle game on the Game of Life",
     "subtitle": "Coding Weeks · CentraleSupélec",
+    "tools": [
+      "Python",
+      "LaTeX"
+    ],
     "summary": "Place a few cells, press play and let Conway's rules do the rest.",
     "body": [
       "You get a small zone to draw some living cells. Then you press play and Conway's rules take over. You win when the cells reach every blue target.",
@@ -122,6 +138,13 @@ export default [
     "date": "2025-11",
     "title": "A robot that finds its way",
     "subtitle": "Autonomous robot · CentraleSupélec",
+    "tools": [
+      "Python",
+      "OpenCV",
+      "Raspberry Pi",
+      "Arduino",
+      "MATLAB"
+    ],
     "summary": "It follows lines, spots crossings and finds the shortest way from A to B.",
     "body": [
       "Five of us built a small robot meant for city deliveries. A camera follows the white lines, it recognizes the crossings and uses BFS to find the shortest way from A to B. If the infrared sensor sees something in the way, it turns around and plans a new route.",
@@ -147,6 +170,12 @@ export default [
     "date": "2025-06",
     "title": "A calm crypto portfolio",
     "subtitle": "Course project · CentraleSupélec",
+    "tools": [
+      "Python",
+      "Jupyter",
+      "pandas",
+      "NumPy"
+    ],
     "summary": "20 cryptos, some maths and strict rules on risk.",
     "body": [
       "Five of us built a portfolio of 20 cryptos plus cash. At each rebalance we estimate returns and risk, then pick the weights with CVXPY. The rules: long only, volatility under 25% and a minimum of diversification.",
@@ -215,6 +244,12 @@ export default [
     "date": "2026-01",
     "title": "Cheaper machines, less for workers?",
     "subtitle": "Research project",
+    "tools": [
+      "Python",
+      "pandas",
+      "NumPy",
+      "LaTeX"
+    ],
     "summary": "I tested a famous economics paper in Python. The answer depends on the years you pick.",
     "body": [
       "Karabarbounis and Neiman showed that as machines got cheaper, workers got a smaller slice of income. I wanted to see how solid that is.",
@@ -261,6 +296,9 @@ export default [
     "date": "2025-06",
     "title": "Sorting donated products with AI",
     "subtitle": "Agence du Don en Nature",
+    "tools": [
+      "n8n"
+    ],
     "summary": "An n8n pipeline that fills in product data for an NGO. The team adopted it.",
     "body": [
       "Agence du Don en Nature handles lots of donated products, and each one needs a price, a link, a picture and a category. That was a lot of work by hand.",
@@ -280,6 +318,9 @@ export default [
     "date": "2025-01",
     "title": "Picking an engine for a Mégane",
     "subtitle": "Powertrain study",
+    "tools": [
+      "Excel"
+    ],
     "summary": "Which engine for a Renault Mégane redesign? Compared in Excel and VBA.",
     "body": [
       "Direct injection, turbo, variable valve timing or hybrid? I built a model in Excel and VBA to compare them on performance, fuel use and emissions."
@@ -293,6 +334,9 @@ export default [
     "date": "2024-04",
     "title": "Turning sound into light",
     "subtitle": "Electronics lab",
+    "tools": [
+      "Arduino"
+    ],
     "summary": "A circuit that turns an audio signal into LED light.",
     "body": [
       "The audio goes through analog filters and a rectifier. Then an Arduino decides how bright the LEDs should be."
