@@ -4,7 +4,6 @@ import { painting } from './paintings.js';
 
 const $ = (selector) => document.querySelector(selector);
 const entries = [...projects, ...posts];
-// The first id sits at the centre of the gallery, the next six around it, then the rest in rings.
 const featured = ['traffic', 'lattice', 'scheduler', 'paris', 'mit', 'life', 'robot'];
 const galleryEntries = [...featured.map(id => entries.find(entry => entry.id === id)).filter(Boolean), ...entries.filter(entry => !featured.includes(entry.id))];
 const compact = matchMedia('(max-width: 700px)');
@@ -12,6 +11,7 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const wall = $('#wall');
 const preview = $('#preview');
 const reader = $('#reader');
+const katexUrl = 'https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/';
 let page = 0;
 let activeFrame;
 let hideTimer;
@@ -19,9 +19,9 @@ let returnView = '#gallery';
 let paused = reducedMotion.matches;
 let motionChosen = false;
 let journalRendered = false;
+let katex;
 const pageSize = 4;
 
-// Escape content so a new journal entry remains plain text.
 const escape = (text = '') => String(text).replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 })[c]);
@@ -34,7 +34,6 @@ const dateLabel = (date) => {
 };
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-// Paintings are generated a few at a time, so the page keeps responding while they appear.
 const unpainted = [];
 let paintTimer;
 const artwork = entry => `<img class="art-image" data-art="${escape(entry.id)}" alt="" draggable="false">`;
@@ -55,6 +54,16 @@ function paintNext() {
   if (unpainted.length) paintTimer = setTimeout(paintNext);
 }
 
+function renderMath(root) {
+  const blocks = root.querySelectorAll('[data-tex]');
+  if (!blocks.length) return;
+  katex ||= import(`${katexUrl}katex.mjs`).then(module => {
+    document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${katexUrl}katex.min.css">`);
+    return module.default;
+  });
+  katex.then(({ render }) => blocks.forEach(block => render(block.dataset.tex, block, { displayMode: true, throwOnError: false }))).catch(() => {});
+}
+
 function hidePreview() {
   clearTimeout(hideTimer);
   preview.hidden = true;
@@ -72,7 +81,7 @@ function showPreview(entry, frame) {
   hidePreview();
   activeFrame = frame;
   frame.setAttribute('aria-expanded', 'true');
-  preview.innerHTML = `<p class="eyebrow">${dateLabel(entry.date)}</p><h2>${escape(entry.title)}</h2><p>${escape(entry.summary)}</p><a href="#entry/${escape(entry.id)}">Read the story <img src="assets/icons/arrow-right.svg" alt=""></a>`;
+  preview.innerHTML = `<p class="eyebrow">${dateLabel(entry.date)}</p><h2>${escape(entry.title)}</h2><p>${escape(entry.summary)}</p><a href="#entry/${escape(entry.id)}">Read more <img src="assets/icons/arrow-right.svg" alt=""></a>`;
   preview.hidden = false;
   const box = frame.getBoundingClientRect();
   const width = preview.offsetWidth;
@@ -86,14 +95,12 @@ function frame(entry, index) {
   const button = document.createElement('button');
   slot.className = 'slot';
   button.className = `frame ${entry.frame || 'paper'}`;
-  // Each frame drifts and tilts on its own rhythm.
   button.style.cssText = `--delay: ${index * -1.3}s; --bob: ${4.6 + index % 4 * .7}s; --sway: ${6 + index % 3 * 1.3}s; --tilt: ${index % 2 ? 1.4 : -1.4}deg`;
   button.setAttribute('aria-label', `${entry.title}, ${dateLabel(entry.date)}`);
   button.setAttribute('aria-expanded', 'false');
   button.setAttribute('aria-controls', 'preview');
   button.innerHTML = `<span class="mat">${artwork(entry)}</span>`;
   button.addEventListener('pointerenter', event => {
-    // No previews while the board is still moving under the pointer.
     if (event.pointerType !== 'touch' && !pointers.size && !wall.classList.contains('moving')) showPreview(entry, button);
   });
   button.addEventListener('pointerleave', scheduleHide);
@@ -118,19 +125,16 @@ function frame(entry, index) {
   return slot;
 }
 
-// Phones: a few frames per wall, with dots to change wall.
 function renderPage() {
   hidePreview();
   const count = Math.ceil(galleryEntries.length / pageSize);
   page = Math.min(page, count - 1);
   wall.replaceChildren(...galleryEntries.slice(page * pageSize, (page + 1) * pageSize).map((entry, index) => frame(entry, page * pageSize + index)));
-  $('#pages').innerHTML = Array.from({length: count}, (_, index) => `<button aria-label="Wall ${index + 1} of ${count}" ${index === page ? 'aria-current="page"' : ''} data-page="${index}"><span></span></button>`).join('');
-  $('#gallery-status').textContent = `Wall ${page + 1} of ${count}. ${wall.children.length} entries.`;
+  $('#pages').innerHTML = Array.from({length: count}, (_, index) => `<button aria-label="Page ${index + 1} of ${count}" ${index === page ? 'aria-current="page"' : ''} data-page="${index}"><span></span></button>`).join('');
+  $('#gallery-status').textContent = `Page ${page + 1} of ${count}.`;
   paint(wall);
 }
 
-// Larger screens: every frame on one honeycomb. Drag to move around, scroll to zoom.
-// Frames shrink towards the edges, like the app grid on a watch.
 const LENS = .48, EDGE = .92;
 const shapes = [[230, 235], [290, 205], [215, 215], [185, 235], [275, 195]];
 const camera = {x: 0, y: 0, zoom: 1, target: 1, anchor: [0, 0], min: .5, max: 2, vx: 0, vy: 0, goal: null, bounds: [0, 0, 0, 0], frame: 0, settled: null};
@@ -151,7 +155,6 @@ function honeycomb(count, pitch = 400, row = 265) {
   }
   return cells;
 }
-// The lens is centred a little above the dock.
 const centre = () => [innerWidth / 2, innerHeight / 2 - 35];
 function lens(x, y) {
   const [hx, hy] = centre(), r = Math.hypot(x / hx, y / hy);
@@ -193,7 +196,6 @@ function tick() {
     if (Math.hypot(camera.goal[0] - camera.x, camera.goal[1] - camera.y) < .5) camera.goal = null;
     moving = true;
   } else if (!pointers.size) {
-    // Keep gliding after a throw, then ease back inside the collection.
     const [x0, y0, x1, y1] = camera.bounds;
     camera.x += camera.vx;
     camera.y += camera.vy;
@@ -208,12 +210,10 @@ function tick() {
   draw();
   wall.classList.toggle('moving', moving || pointers.size > 0);
   if (moving) return move();
-  // Once still, preview the frame that has keyboard focus, or the one under the pointer.
   if (camera.settled) camera.settled();
   else if (!pointers.size) wall.querySelector('.frame:hover')?.dispatchEvent(new Event('pointerenter'));
   camera.settled = null;
 }
-// Past the edge of the collection, the board gives way less and less.
 function pull(value, delta, min, max) {
   const give = 150 / camera.zoom, over = Math.abs(value - clamp(value, min, max));
   return clamp(value + delta * (1 - Math.min(1, over / give)) ** 2, min - give, max + give);
@@ -255,7 +255,7 @@ function renderBoard() {
   camera.x = camera.y = 0;
   fitBoard(true);
   draw();
-  $('#gallery-status').textContent = `${slots.length} entries. Drag to move around, scroll to zoom.`;
+  $('#gallery-status').textContent = `${slots.length} entries. Drag to move, scroll to zoom.`;
   paint(wall);
 }
 function renderGallery() {
@@ -311,7 +311,6 @@ const release = event => {
 };
 wall.addEventListener('pointerup', release);
 wall.addEventListener('pointercancel', release);
-// A drag should not also open the frame it started on. Keyboard clicks have no detail.
 wall.addEventListener('click', event => { if (dragged >= 5 && event.detail) event.stopPropagation(); }, true);
 wall.addEventListener('wheel', event => {
   if (compact.matches) return;
@@ -327,25 +326,36 @@ function renderJournal() {
   paint($('#entries'));
 }
 
-function openReader(entry) {
+const link = ({ label, url }) => `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer">${escape(label)}<img src="assets/icons/arrow-up-right.svg" alt=""></a>`;
+const linkList = list => list.length ? `<div class="links">${list.map(link).join('')}</div>` : '';
+
+function openDialog(html) {
   hidePreview();
-  $('#article').innerHTML = `<p class="eyebrow">${dateLabel(entry.date)}</p><h2 id="reader-title">${escape(entry.title)}</h2><p class="subtitle">${escape(entry.subtitle || '')}</p><figure class="reader-art">${artwork(entry)}</figure><div class="prose">${(entry.body || [entry.summary]).map(p => `<p>${escape(p)}</p>`).join('')}</div>${entry.image ? `<figure class="reader-art"><img class="art-image" src="${safeUrl(entry.image)}" alt="${escape(entry.imageNote || entry.title)}"><figcaption>${escape(entry.imageNote || '')}</figcaption></figure>` : ''}<div class="links">${(entry.links || []).filter(link => safeUrl(link.url)).map(link => `<a href="${safeUrl(link.url)}" target="_blank" rel="noopener noreferrer">${escape(link.label)}<img src="assets/icons/arrow-up-right.svg" alt=""></a>`).join('')}</div>`;
+  $('#article').innerHTML = html;
   paint($('#article'));
+  renderMath($('#article'));
   reader.scrollTop = 0;
   if (!reader.open) reader.showModal();
+}
+
+function openEntry(entry) {
+  const image = safeUrl(entry.image);
+  openDialog(`<p class="eyebrow">${dateLabel(entry.date)}</p><h2 id="reader-title">${escape(entry.title)}</h2><p class="subtitle">${escape(entry.subtitle || '')}</p><figure class="reader-art">${artwork(entry)}</figure><div class="prose">${(entry.body || [entry.summary]).map(p => `<p>${escape(p)}</p>`).join('')}</div>`
+    + (image ? `<figure class="work"><a href="${image}" target="_blank" rel="noopener"><img src="${image}" alt="${escape(entry.imageNote || entry.title)}"></a><figcaption>${escape(entry.imageNote || '')}</figcaption></figure>` : '')
+    + (entry.formula ? `<figure class="formula"><div data-tex="${escape(entry.formula)}">${escape(entry.formula)}</div><figcaption>${escape(entry.formulaNote || '')}</figcaption></figure>` : '')
+    + linkList((entry.links || []).filter(item => safeUrl(item.url))));
+}
+
+function openAbout() {
+  openDialog(`<p class="eyebrow">About me</p><h2 id="reader-title">Hi, I'm Rafael.</h2><div class="prose"><p>I'm an engineering student from Spain. I did my bachelor's at ICAI in Madrid and two years at CentraleSupélec in Paris. Now I'm back at ICAI for a master's in industrial engineering.</p><p>Most of what you'll find here mixes maths and code with real stuff: traffic, robots, money. In summer 2026 I was a data science intern at Acerinox.</p><p>I also co-founded Junior Enterprise Comillas, and I'm its president.</p></div><a class="cv" href="assets/pdfs/CV_EN_RML.pdf" target="_blank" rel="noopener"><img src="assets/pdfs/cv-preview.jpg" alt="The first page of my CV"><span><strong>My CV</strong>One page, PDF</span></a>`
+    + linkList([{ label: 'GitHub', url: 'https://github.com/rvfamaestre' }, { label: 'LinkedIn', url: 'https://www.linkedin.com/in/rafael-maestre-lopez/' }]));
 }
 
 function route() {
   const hash = location.hash || '#gallery';
   const entry = entries.find(item => hash === `#entry/${item.id}`);
-  if (entry) return openReader(entry);
-  if (hash === '#about') {
-    hidePreview();
-    $('#article').innerHTML = `<p class="eyebrow">A small introduction</p><h2 id="reader-title">Rafael<br><em>Maestre López.</em></h2><div class="prose"><p>Engineering, code, and a few things along the way.</p><p>A double degree at ICAI and CentraleSupélec. Projects that move between simulation, automation, and applied mathematics.</p><p>This is an ongoing collection. A place for the work, the ideas, and the moments worth keeping.</p></div><div class="links"><a href="https://github.com/rvfamaestre" target="_blank" rel="noopener noreferrer">GitHub<img src="assets/icons/arrow-up-right.svg" alt=""></a><a href="https://www.linkedin.com/in/rafael-maestre-lopez/" target="_blank" rel="noopener noreferrer">LinkedIn<img src="assets/icons/arrow-up-right.svg" alt=""></a></div>`;
-    reader.scrollTop = 0;
-    if (!reader.open) reader.showModal();
-    return;
-  }
+  if (entry) return openEntry(entry);
+  if (hash === '#about') return openAbout();
   if (reader.open) reader.close();
   hidePreview();
   const journal = hash === '#journal';
@@ -404,7 +414,7 @@ reader.addEventListener('click', event => {
 function updateMotion() {
   document.body.classList.toggle('paused', paused);
   const button = $('#motion');
-  const label = paused ? 'Enable movement' : 'Pause movement';
+  const label = paused ? 'Play' : 'Pause';
   button.setAttribute('aria-label', label);
   button.setAttribute('aria-pressed', String(paused));
   button.title = label;

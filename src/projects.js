@@ -1,19 +1,19 @@
-// Add entries here. Every id gets its own procedural painting.
 export default [
   {
     "id": "traffic",
-    "date": "2026-02",
-    "title": "Learning to flow",
-    "subtitle": "Mixed-Autonomy Traffic RL",
-    "summary": "Teaching connected vehicles to smooth traffic, using reinforcement learning and classical control.",
+    "date": "2026-08",
+    "title": "Fixing phantom traffic jams",
+    "subtitle": "Bachelor's thesis · L2S lab",
+    "summary": "My thesis. An RL controller for self-driving cars that makes traffic flow smoother.",
     "body": [
-      "This ongoing project asks a focused control question: when only part of the fleet is autonomous, can a learned controller improve global traffic behavior without abandoning the interpretability of cooperative cruise control? I kept the work anchored to an inherited baseline rather than rebuilding the entire stack from zero.",
-      "The main design choice is a residual policy. Instead of relearning low-level longitudinal behavior, the reinforcement-learning layer sits on top of the classical controller and learns small corrective actions that can smooth stop-and-go waves and improve throughput in ring-road scenarios."
+      "Imagine you're on the highway and a car brakes. The next one brakes a bit more, and a few cars later everyone is stopped. There was no accident. That's a phantom traffic jam, and it's what my thesis is about.",
+      "I kept a classic cruise control model and added a small reinforcement learning layer on top. It looks further than just the car ahead and makes small corrections.",
+      "In simulation it cut speed variation by 76%, and fuel use and CO₂ by 54%, compared with human drivers. I'm really proud of this one."
     ],
     "links": [
       {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
+        "label": "L2S lab",
+        "url": "https://l2s.centralesupelec.fr/"
       }
     ],
     "frame": "ink",
@@ -22,40 +22,35 @@ export default [
   {
     "id": "lattice",
     "date": "2026-04",
-    "title": "Forms of possibility",
-    "subtitle": "Additive Manufacturing",
-    "summary": "Three studies in additive manufacturing, from induction heating to structural optimisation and TPMS lattices.",
+    "title": "3D printing, three ways",
+    "subtitle": "Additive manufacturing · CentraleSupélec",
+    "summary": "Three small studies on 3D printed parts: heat, weight and lattices.",
     "body": [
-      "Rather than a single artifact, this project is a portfolio of three engineering deliverables completed during the additive-manufacturing sequence at CentraleSupelec. Each piece emphasized a different design layer: multiphysics heating, structural efficiency, and research-oriented lattice geometry.",
-      "The induction-heating study used COMSOL to reason about coupled electromagnetic and thermal behavior. The optimization challenge shifted the work toward load paths, weight reduction, and manufacturability tradeoffs under geometric constraints."
+      "Three projects in one course, each one about a different side of 3D printing.",
+      "First I used COMSOL to see how induction heating warms up a part. Then I worked on making a part lighter without making it weaker. The last one was about TPMS lattices, those sponge-like shapes that are really hard to make any other way."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "formula": "\\sin x \\cos y + \\sin y \\cos z + \\sin z \\cos x = 0",
+    "formulaNote": "The gyroid, one of the best-known TPMS shapes.",
+    "links": [],
     "frame": "oak",
     "artStyle": "sculpture"
   },
   {
     "id": "scheduler",
     "date": "2026-04",
-    "title": "A little more time",
-    "subtitle": "Notion Scheduler",
-    "summary": "A Python tool that turns Notion tasks and calendar constraints into a workable day.",
+    "title": "A to-do list that plans itself",
+    "subtitle": "Python · Notion",
+    "summary": "It takes tasks from Notion and fits them into the free gaps of the calendar.",
     "body": [
-      "This project started from a practical operations need: take a backlog living in Notion, combine it with real scheduling constraints, then produce a plan that is structured enough to act on immediately. The result is a Python tool that uses Notion as the source of truth instead of requiring a parallel planning workflow.",
-      "The interesting problem was not simple ranking. The scheduler had to interpret task priority, fit work around calendar constraints, and optionally synchronize the resulting schedule outward to Google Calendar without turning the system into a brittle integration maze."
+      "The script reads tasks from Notion, sorts them by urgency and priority, and finds free time between calendar events.",
+      "Then it writes the plan back to Notion, and to Google Calendar if you want. There's also a small page in the browser to change the settings."
     ],
+    "image": "assets/work/scheduler.svg",
+    "imageNote": "How it works, from Notion to the calendar. Click to see it big.",
     "links": [
       {
-        "label": "Project repository",
+        "label": "Code on GitHub",
         "url": "https://github.com/rvfamaestre/notion-scheduler"
-      },
-      {
-        "label": "Architecture diagram",
-        "url": "https://raw.githubusercontent.com/rvfamaestre/notion-scheduler/main/docs/automation-diagram.svg"
       }
     ],
     "frame": "paper",
@@ -64,62 +59,58 @@ export default [
   {
     "id": "azores",
     "date": "2024",
-    "title": "Road to Success",
-    "subtitle": "Road To Success",
-    "summary": "An entrepreneurship bootcamp in the Azores, bringing ideas and people together.",
+    "title": "Road to Success, Azores",
+    "subtitle": "Entrepreneurship bootcamp",
+    "summary": "A bootcamp in the Azores about ideas, pitching and people.",
     "body": [
-      "Road To Success Azores sits slightly outside the rest of the technical portfolio, but it matters because it broadened the way I think about problem framing, communication, and initiative. The bootcamp was less about a single deliverable and more about entrepreneurial exposure in an international setting.",
-      "That kind of experience is useful because it forces rapid synthesis: clarify an idea, communicate it to others, and improve it through discussion rather than through extended solitary iteration."
+      "Not a technical project for once.",
+      "It was all about ideas: how to explain one fast, share it with people you just met, and make it better with their feedback. A very international group, in the middle of the Atlantic."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "links": [],
     "frame": "paper",
     "artStyle": "mineral"
   },
   {
     "id": "mit",
     "date": "2026-05",
-    "title": "The mathematics of uncertainty",
+    "title": "Maths for finance",
     "subtitle": "MITx 15.455x",
-    "summary": "Probability, stochastic processes and optimisation, applied to quantitative finance.",
+    "summary": "MIT's online course on the maths behind quantitative finance.",
     "body": [
-      "This course mattered less as a credential than as a compact toolkit. It pulled together the mathematical language needed to reason about uncertainty, dynamic processes, and financial decision making instead of presenting those topics as isolated chapters.",
-      "The strongest part of the sequence is how it connects modeling and computation. Probability and stochastic processes motivate the structure, Monte Carlo simulation turns theory into numerical experimentation, and optimization closes the loop by making the decision problem explicit."
+      "Probability, stochastic processes, Monte Carlo and optimization, all applied to finance.",
+      "What I liked most is how theory and code go together. You write a model, simulate it, and then use it to make a decision."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "formula": "dS_t = \\mu S_t \\, dt + \\sigma S_t \\, dW_t",
+    "formulaNote": "Geometric Brownian motion, the classic model for a stock price.",
+    "links": [],
     "frame": "silver",
     "artStyle": "watercolor"
   },
   {
     "id": "life",
     "date": "2024-11",
-    "title": "Enigma of Life",
-    "subtitle": "Enigma of Life",
-    "summary": "A puzzle game where the first move sets a whole world in motion.",
+    "title": "A puzzle game on the Game of Life",
+    "subtitle": "Coding Weeks · CentraleSupélec",
+    "summary": "Place a few cells, press play and let Conway's rules do the rest.",
     "body": [
-      "Enigma of Life turns Conway's Game of Life into a puzzle-design problem. Instead of watching a simulation passively, the player is asked to engineer the initial pattern so the system evolves toward a target condition.",
-      "That makes the game more about reasoning than reflex. The interesting design space comes from balancing the determinism of the rules with level structures that still feel surprising."
+      "You get a small zone to draw some living cells. Then you press play and Conway's rules take over. You win when the cells reach every blue target.",
+      "We were six and worked in short sprints: first the Game of Life in Pygame, then levels, a menu, a level creator and music. Later I cleaned up the code and wrote the docs."
     ],
+    "formula": "s_{t+1} = \\begin{cases} 1 & \\text{if } n = 3 \\text{, or if } s_t = 1 \\text{ and } n = 2 \\\\ 0 & \\text{otherwise} \\end{cases}",
+    "formulaNote": "The whole rule. n is the number of living neighbors.",
+    "image": "assets/work/life.jpg",
+    "imageNote": "The start of a level, and the same level solved.",
     "links": [
       {
-        "label": "Project repository",
+        "label": "Code on GitHub",
         "url": "https://github.com/rvfamaestre/cws-jdv"
       },
       {
-        "label": "Report PDF",
+        "label": "Report (PDF)",
         "url": "https://raw.githubusercontent.com/rvfamaestre/cws-jdv/main/report.pdf"
       },
       {
-        "label": "Presentation PDF",
+        "label": "Slides (PDF, French)",
         "url": "https://raw.githubusercontent.com/rvfamaestre/cws-jdv/main/soutenance.pdf"
       }
     ],
@@ -129,49 +120,49 @@ export default [
   {
     "id": "robot",
     "date": "2025-11",
-    "title": "Finding a way",
-    "subtitle": "ST5 VAC-EI Robot",
-    "summary": "A line-following robot that sees intersections, plans routes and responds to obstacles.",
+    "title": "A robot that finds its way",
+    "subtitle": "Autonomous robot · CentraleSupélec",
+    "summary": "It follows lines, spots crossings and finds the shortest way from A to B.",
     "body": [
-      "This project started as a lab robot and became an end-to-end autonomy exercise: detect the line, interpret intersections, plan over a graph, and execute motor commands reliably enough to handle a real course instead of a scripted demo.",
-      "I focused on the autonomy side of the stack. In the Python layer, the robot isolates the lower region of the camera frame, extracts a clean track contour, smooths the centroid, and converts lateral error into steering corrections. When the robot reaches an intersection, the planner switches from continuous control to graph navigation and chooses the next turn from a Breadth-First Search path."
+      "Five of us built a small robot meant for city deliveries. A camera follows the white lines, it recognizes the crossings and uses BFS to find the shortest way from A to B. If the infrared sensor sees something in the way, it turns around and plans a new route.",
+      "My part was the simulation, in MATLAB, Simulink and Stateflow, and the app to control the robot."
     ],
+    "image": "assets/work/robot.jpg",
+    "imageNote": "Our robot. The team was called Ctrl + Car.",
     "links": [
       {
-        "label": "Project repository",
+        "label": "Code on GitHub",
         "url": "https://github.com/rvfamaestre/cvt-vac"
       },
       {
-        "label": "Final presentation PDF",
+        "label": "Final slides (PDF, French)",
         "url": "https://raw.githubusercontent.com/rvfamaestre/cvt-vac/main/Soutenance%20Finale%20EI%20VAC.pdf"
-      },
-      {
-        "label": "Track reference image",
-        "url": "https://raw.githubusercontent.com/rvfamaestre/cvt-vac/main/huit_obstacle.jpg"
       }
     ],
     "frame": "oak",
-    "image": "assets/robot.jpg",
-    "imageNote": "Track image from the project repository.",
     "artStyle": "relief"
   },
   {
     "id": "portfolio",
     "date": "2025-06",
-    "title": "Risk & balance",
-    "subtitle": "Crypto Portfolio Optimization",
-    "summary": "Building and testing a portfolio of 20 crypto assets under realistic constraints.",
+    "title": "A calm crypto portfolio",
+    "subtitle": "Course project · CentraleSupélec",
+    "summary": "20 cryptos, some maths and strict rules on risk.",
     "body": [
-      "This project treats crypto portfolio construction as a disciplined backtesting problem rather than a loose optimization exercise. The framework evaluates dynamic allocation rules on a rolling basis so performance is tied to decisions that would have been feasible at the time.",
-      "Mean-variance optimization is the central allocation engine, but the useful part is how it is constrained. Risk limits, benchmark comparisons, and transaction costs keep the framework from drifting into a frictionless-paper-result mindset."
+      "Five of us built a portfolio of 20 cryptos plus cash. At each rebalance we estimate returns and risk, then pick the weights with CVXPY. The rules: long only, volatility under 25% and a minimum of diversification.",
+      "In the backtest our final strategy made 13.4% with 6.4% volatility. Bitcoin lost 4.4% with 54.9%."
     ],
+    "formula": "w^* = \\arg\\min_{w} \\; \\tfrac{1}{2} \\, w^\\top \\Sigma \\, w - \\gamma \\, \\mu^\\top w \\quad \\text{with} \\quad \\textstyle\\sum_i w_i = 1, \\; w_i \\ge 0",
+    "formulaNote": "How we chose the weights, balancing risk against expected return.",
+    "image": "assets/work/portfolio.jpg",
+    "imageNote": "Our portfolio (blue) against Bitcoin (orange), 2022 to 2024.",
     "links": [
       {
-        "label": "Project repository",
+        "label": "Code on GitHub",
         "url": "https://github.com/rvfamaestre/mds-pfm"
       },
       {
-        "label": "Presentation PDF",
+        "label": "Slides (PDF)",
         "url": "https://raw.githubusercontent.com/rvfamaestre/mds-pfm/main/soutenance.pdf"
       }
     ],
@@ -181,38 +172,28 @@ export default [
   {
     "id": "reinforcement",
     "date": "2026-03",
-    "title": "Learning by doing",
-    "subtitle": "Stanford CS234",
-    "summary": "Exploring how agents learn to make decisions through interaction.",
+    "title": "Stanford's RL course",
+    "subtitle": "CS234",
+    "summary": "How agents learn by trying things, step by step.",
     "body": [
-      "CS234 was useful because it organizes reinforcement learning as a coherent design language instead of a list of algorithms. The course moves from formal problem setup to value methods, policy methods, exploration, and generalization with a clear sense of why each layer exists.",
-      "That structure helped bridge theoretical intuition and practical systems work. It also sharpened how I think about modern RL settings where function approximation and preference-style signals matter as much as the classical tabular story."
+      "I took it while working on my thesis, and it helped a lot. It goes step by step: how to set up the problem, value methods, policy methods and exploration."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "formula": "Q^*(s,a) = \\mathbb{E}\\left[\\, r + \\gamma \\max_{a'} Q^*(s',a') \\,\\right]",
+    "formulaNote": "The Bellman equation, where a lot of it starts.",
+    "links": [],
     "frame": "paper",
     "artStyle": "sculpture"
   },
   {
     "id": "regions",
     "date": "2026-02",
-    "title": "Why places grow differently",
-    "subtitle": "Regional Development Gaps",
-    "summary": "A literature review on institutions, infrastructure and the places they shape.",
+    "title": "Why some regions stay behind",
+    "subtitle": "Literature review",
+    "summary": "Why poor regions often stay poor, long after the reasons are gone.",
     "body": [
-      "This literature review focuses on a difficult economic-geography question: why do regional development gaps remain so persistent even after the historical conditions that created them have shifted? The review organizes the answer around three mechanisms rather than presenting an undifferentiated reading list.",
-      "Extractive institutions explain persistence through political and institutional lock-in. Transport infrastructure emphasizes durable spatial advantage. Urban path dependence highlights the self-reinforcing logic of agglomeration once a city or region has established momentum."
+      "Some regions stay behind for decades, even when the original reasons are long gone. I read around three ideas: institutions that get stuck, transport that keeps giving some places an edge, and cities that grow just because they already grew."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "links": [],
     "frame": "oak",
     "artStyle": "relief"
   },
@@ -220,43 +201,41 @@ export default [
     "id": "databox",
     "date": "2026-01",
     "title": "Factory DataBox",
-    "subtitle": "Factory DataBox",
-    "summary": "Bringing supply-chain training and exercises to the web.",
+    "subtitle": "Supply chain training, online",
+    "summary": "Bringing a supply chain training course to the web.",
     "body": [
-      "Factory DataBox is a supply-chain training platform, but the work here was closer to product infrastructure than simple content editing. The goal was to redesign how training material, exercises, and navigation work once the learning experience moves to the web.",
-      "That meant reformatting course content for browser reading, improving the structure of exercises, and supporting multilingual expansion so the platform could grow beyond a narrow audience. Traffic and SEO were not side concerns; they were part of the project definition."
+      "Factory DataBox teaches supply chain. I helped bring it online: I reshaped the course for the browser, improved the exercises and got it ready for more languages. Traffic and SEO were part of the job too."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "links": [],
     "frame": "ink",
     "artStyle": "geometry"
   },
   {
     "id": "labor",
     "date": "2026-01",
-    "title": "The changing share of labour",
-    "subtitle": "Labor Share Study",
-    "summary": "A reproducible study of how the labour share of national income changes.",
+    "title": "Cheaper machines, less for workers?",
+    "subtitle": "Research project",
+    "summary": "I tested a famous economics paper in Python. The answer depends on the years you pick.",
     "body": [
-      "This project studies a narrow empirical question with a deliberately compact pipeline: how do investment-good prices relate to labor-share dynamics across countries? The design goal was to build something minimal, readable, and reproducible rather than a large exploratory notebook with diffuse scope.",
-      "The workflow covers data preparation, trend estimation, and regression analysis in sequence. That made it possible to move from raw inputs to interpretable results without losing track of the logic behind each transformation."
+      "Karabarbounis and Neiman showed that as machines got cheaper, workers got a smaller slice of income. I wanted to see how solid that is.",
+      "So I rebuilt the core of it in Python and played with countries and time windows. With long, clean data the link shows up. For the Americas it even flips."
     ],
+    "formula": "\\beta^{s}_i = a + b \\, \\beta^{\\xi}_i + \\varepsilon_i",
+    "formulaNote": "One point per country: its labor share trend against its investment price trend.",
+    "image": "assets/work/labor.jpg",
+    "imageNote": "From 1980 to 2000. Where investment got cheaper faster, the labor share fell more.",
     "links": [
       {
-        "label": "Project repository",
+        "label": "Code on GitHub",
         "url": "https://github.com/rvfamaestre/eci-tp1"
       },
       {
-        "label": "Project brief PDF",
+        "label": "My report (PDF)",
         "url": "https://raw.githubusercontent.com/rvfamaestre/eci-tp1/main/eci_kn_rml.pdf"
       },
       {
-        "label": "Labor-share report PDF",
-        "url": "https://raw.githubusercontent.com/rvfamaestre/eci-tp1/main/labor_share_2014.pdf"
+        "label": "The original paper",
+        "url": "https://www.nber.org/papers/w19136"
       }
     ],
     "frame": "paper",
@@ -265,36 +244,32 @@ export default [
   {
     "id": "combustion",
     "date": "2026-01",
-    "title": "A spark, modelled",
-    "subtitle": "Combustion Modeling",
-    "summary": "Modelling hydrogen-air combustion, from equilibrium to ignition.",
+    "title": "Modeling a hydrogen flame",
+    "subtitle": "Combustion course",
+    "summary": "Hydrogen and air, modeled step by step until it ignites.",
     "body": [
-      "This combustion-modeling coursework is organized as a layered progression rather than a single numerical exercise. The work moves from thermochemical reasoning to equilibrium models, then to finite-rate kinetics and plasma-assisted ignition.",
-      "That structure makes the project useful as a modeling map. Each stage adds realism and complexity while preserving a clear sense of what the simpler layer was still able to explain."
+      "Each step adds a bit more reality: first the thermochemistry, then equilibrium, then how fast reactions really go, and finally ignition helped by plasma."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "formula": "k(T) = A \\, T^{b} \\, e^{-E_a / R T}",
+    "formulaNote": "The Arrhenius law: how fast a reaction goes depending on temperature.",
+    "links": [],
     "frame": "silver",
     "artStyle": "mineral"
   },
   {
     "id": "adn",
     "date": "2025-06",
-    "title": "Time for what matters",
-    "subtitle": "ADN Workflow Automation",
-    "summary": "Automating product-data enrichment for Agence du Don en Nature.",
+    "title": "Sorting donated products with AI",
+    "subtitle": "Agence du Don en Nature",
+    "summary": "An n8n pipeline that fills in product data for an NGO. The team adopted it.",
     "body": [
-      "This project focused on operational data enrichment rather than pure automation theater. The goal was to speed up and standardize how Agence du Don en Nature product records are completed by adding pricing, reliability, URL, and image information with less manual effort.",
-      "A key part of the work was comparative, not just implementational. I evaluated both a small MVP path and an n8n-based orchestration approach so the team could reason about speed, modularity, maintainability, and integration complexity instead of defaulting to one tooling choice."
+      "Agence du Don en Nature handles lots of donated products, and each one needs a price, a link, a picture and a category. That was a lot of work by hand.",
+      "I compared a small MVP with an n8n pipeline using AI agents. The n8n one is what the team ended up adopting."
     ],
     "links": [
       {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
+        "label": "Agence du Don en Nature",
+        "url": "https://adnfrance.org/"
       }
     ],
     "frame": "paper",
@@ -303,38 +278,28 @@ export default [
   {
     "id": "powertrain",
     "date": "2025-01",
-    "title": "A different kind of drive",
-    "subtitle": "Megane Powertrain Study",
-    "summary": "Comparing powertrain options for a Renault Megane redesign.",
+    "title": "Picking an engine for a Mégane",
+    "subtitle": "Powertrain study",
+    "summary": "Which engine for a Renault Mégane redesign? Compared in Excel and VBA.",
     "body": [
-      "This project uses Excel and VBA as engineering tools rather than office software. The objective was to compare several powertrain architectures for a Renault Megane redesign and understand their consequences on performance, consumption, and emissions.",
-      "The value of the work comes from comparative modeling. Direct injection, turbocharging, VVT, and hybrid solutions are evaluated against one another so the final output behaves like a design study instead of a single-configuration calculation."
+      "Direct injection, turbo, variable valve timing or hybrid? I built a model in Excel and VBA to compare them on performance, fuel use and emissions."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "links": [],
     "frame": "ink",
     "artStyle": "sculpture"
   },
   {
     "id": "sound",
     "date": "2024-04",
-    "title": "From sound to colour",
-    "subtitle": "Sound-to-Color Transducer",
-    "summary": "An electronics experiment that turns an audio signal into LED light.",
+    "title": "Turning sound into light",
+    "subtitle": "Electronics lab",
+    "summary": "A circuit that turns an audio signal into LED light.",
     "body": [
-      "This electronics-lab project is a clean signal-chain exercise: take an audio input, shape it with analog circuitry, and transform the processed signal into visible LED output. The challenge is not only making the effect work, but making each stage of the chain legible.",
-      "Filtering and rectification turn the raw audio into something the control logic can use. Arduino then adds a programmable layer for mapping signal behavior to light intensity."
+      "The audio goes through analog filters and a rectifier. Then an Arduino decides how bright the LEDs should be."
     ],
-    "links": [
-      {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
-      }
-    ],
+    "formula": "f_c = \\frac{1}{2 \\pi R C}",
+    "formulaNote": "The cutoff frequency of a simple RC filter.",
+    "links": [],
     "frame": "silver",
     "artStyle": "watercolor"
   }

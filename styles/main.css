@@ -74,7 +74,19 @@ dialog::backdrop { background: #e5e4dc66; backdrop-filter: blur(3px); }
 #reader-title { font-size: 44px; }
 .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 30px; }
 .reader-art { margin: 30px 0; }
-.reader-art .art-image { height: auto; max-height: 420px; object-fit: contain; }
+.reader-art .art-image { height: auto; max-height: 300px; aspect-ratio: 4 / 5; object-fit: contain; }
+.work { margin: 30px 0; }
+.work img { display: block; width: 100%; height: auto; max-height: 460px; object-fit: contain; background: #fffefa; border: 1px solid #e7e5dc; }
+.formula { margin: 30px 0; padding: 20px 16px 14px; background: #fffefa; border: 1px solid #e7e5dc; border-radius: 3px; }
+.formula [data-tex] { overflow-x: auto; overflow-y: hidden; text-align: center; font: 12px/1.6 ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+.formula .katex-display { margin: 0; }
+.formula .katex { font-size: 1.12em; color: var(--ink); }
+.formula figcaption { text-align: center; }
+.cv { display: flex; align-items: center; gap: 22px; margin: 34px 0 0; padding: 14px; border: 1px solid #e7e5dc; border-radius: 3px; background: #fffefa; transition: border-color .2s; }
+.cv:hover { border-color: #cbcbc0; }
+.cv img { width: 132px; height: auto; box-shadow: 0 1px 2px #322a2522, 0 8px 18px #322a2514; }
+.cv span { font-size: 12px; color: var(--muted); }
+.cv strong { display: block; font: 22px/1.2 Georgia, serif; font-weight: normal; color: var(--ink); margin-bottom: 4px; }
 figcaption { color: var(--muted); font-size: 10px; line-height: 1.5; margin-top: 9px; }
 .prose { font-size: 14px; line-height: 1.85; }
 .prose p { margin: 0 0 21px; }
@@ -99,6 +111,7 @@ figcaption { color: var(--muted); font-size: 10px; line-height: 1.5; margin-top:
   .entry-arrow { display: none; }
   .entry h3 { font-size: 15px; }
   dialog { padding: 75px 27px 40px; }
+  .cv img { width: 96px; }
   #reader-title { font-size: 39px; }
 }
 @media (max-height: 500px) and (min-width: 701px) {

@@ -79,7 +79,6 @@ function css(c, a = 1) { const [r, g, b] = typeof c === 'string' ? hex2rgb(c) : 
 function adjust([r, g, b], amt) { const t = Math.min(1, Math.abs(amt)), tar = amt < 0 ? 0 : 255; return [r + (tar - r) * t, g + (tar - g) * t, b + (tar - b) * t]; }
 function shade(hex, amt) { return adjust(hex2rgb(hex), amt); }
 function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
-// Samples a gradient through rgb colours, t from 0 to 1.
 function stops(colors, t) { const n = colors.length - 1, s = Math.min(n - 1, Math.max(0, Math.floor(t * n))); return mix(colors[s], colors[s + 1], t * n - s); }
 
 function makeNoise(seed) {
@@ -110,7 +109,6 @@ function grain(ctx, rng, amount) {
   for (let i = 0; i < d.length; i += 4) { const n = (rng() - .5) * amount; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
   ctx.putImageData(img, 0, 0);
 }
-// Recursively displaces edge midpoints. Layered at low opacity, it bleeds like wet paint.
 function deform(rng, pts, depth) {
   for (let d = 0; d < depth; d++) {
     pts = pts.flatMap((a, i) => {
@@ -131,7 +129,6 @@ function pixels(w, h, shader) {
   return buf;
 }
 
-// Domain-warped agate.
 function mineral(ctx, rng, pal) {
   const noise = makeNoise(noiseSeed(rng));
   const freq = rand(rng, 2.6, 4.2), warpAmt = rand(rng, 1.6, 2.8);
@@ -145,7 +142,6 @@ function mineral(ctx, rng, pal) {
   grain(ctx, rng, 7);
 }
 
-// Translucent pigment pooling on paper.
 function watercolor(ctx, rng, pal) {
   ctx.fillStyle = pal[0]; ctx.fillRect(0, 0, W, H);
   const blooms = 3 + (rng() * 4 | 0), wash = canvas(W, H), wctx = wash.getContext('2d');
@@ -161,7 +157,6 @@ function watercolor(ctx, rng, pal) {
     for (let layer = 1; layer <= 36; layer++) {
       wctx.globalAlpha = .035; polygon(wctx, deform(rng, base, 3)); wctx.fill();
       if (layer % 6) continue;
-      // Lift some pigment back out, so the wash dries unevenly.
       wctx.globalCompositeOperation = 'destination-out'; wctx.globalAlpha = .06;
       for (let k = 0; k < 48; k++) { wctx.beginPath(); wctx.arc(cx + gauss(rng) * r, cy + gauss(rng) * r, rand(rng, 3, 22), 0, TAU); wctx.fill(); }
       wctx.globalCompositeOperation = 'source-over';
@@ -171,7 +166,6 @@ function watercolor(ctx, rng, pal) {
   grain(ctx, rng, 10);
 }
 
-// Soft stacked colour fields with scumbled surfaces.
 function field(ctx, rng, pal) {
   const [ground, ...colors] = pal;
   const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -206,7 +200,6 @@ function field(ctx, rng, pal) {
   grain(ctx, rng, 9);
 }
 
-// Hard-edged tiles, printed with a little grain.
 function geometry(ctx, rng, pal) {
   const [ground, ...inks] = pal, cols = pick(rng, [3, 4, 4, 5]), s = W / cols, rows = Math.ceil(H / s);
   ctx.fillStyle = ground; ctx.fillRect(0, 0, W, H);
@@ -230,7 +223,6 @@ function geometry(ctx, rng, pal) {
   grain(ctx, rng, 14);
 }
 
-// Merged clay forms, lit from a height field.
 function sculpture(ctx, rng, pal) {
   const bw = 320, bh = 400, [floor, ...colors] = pal.map(hex2rgb);
   const forms = Array.from({ length: 4 + (rng() * 4 | 0) }, () => ({ x: rand(rng, 70, bw - 70), y: rand(rng, 80, bh - 90), r: rand(rng, 30, 76), c: pick(rng, colors) }));
@@ -257,7 +249,6 @@ function sculpture(ctx, rng, pal) {
   grain(ctx, rng, 6);
 }
 
-// Stacked paper layers cut along noise contours.
 function relief(ctx, rng, pal) {
   const noise = makeNoise(noiseSeed(rng)), gw = 161, gh = 201, f = rand(rng, 1.3, 2.4), levels = 5 + (rng() * 4 | 0);
   const grid = new Float32Array(gw * gh), ox = rand(rng, 0, 90), oy = rand(rng, 0, 90);
@@ -288,7 +279,6 @@ function relief(ctx, rng, pal) {
   grain(ctx, rng, 8);
 }
 
-// Bevelled Voronoi tiles, like cut glass set in lead.
 function cellular(ctx, rng, pal) {
   const bw = 320, bh = 400, [lead, ...colors] = pal.map(hex2rgb);
   const sites = Array.from({ length: 24 + (rng() * 18 | 0) }, () => ({ x: rand(rng, -20, bw + 20), y: rand(rng, -20, bh + 20), c: adjust(pick(rng, colors), gauss(rng) * .08) }));
@@ -318,7 +308,6 @@ export function painting(seed, style) {
   const chosen = RENDERERS[style] ? style : STYLES[h % STYLES.length];
   const art = canvas(W, H), ctx = art.getContext('2d', { willReadFrequently: true });
   RENDERERS[chosen](ctx, rng, pick(rng, PALETTES[chosen]));
-  // JPEG encodes about ten times faster than WebP, and every browser can write it.
   const url = art.toDataURL('image/jpeg', .9);
   cache.set(key, url);
   return url;

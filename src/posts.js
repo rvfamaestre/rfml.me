@@ -1,40 +1,48 @@
-// Add entries here. Every id gets its own procedural painting.
 export default [
   {
     "id": "perunidad",
     "date": "2024-10",
-    "title": "A little further from home",
-    "subtitle": "Perunidad · HumaCS",
-    "summary": "Supporting educational access and sustainable development in Peru through Perunidad at HumaCS.",
+    "title": "Building classrooms in Peru",
+    "subtitle": "Perunidad · NAFE, Huanchaco",
+    "summary": "Six weeks in Huanchaco with a team of four. Two classrooms, water repairs and workshops for kids.",
     "body": [
-      "Perunidad is the HumaCS group focused on educational access and sustainable development in underserved areas of Peru.",
-      "Project lead from October 2024 to December 2025, alongside the engineering programme at CentraleSupélec."
+      "With Perunidad I led a team of four on a six-week project with NAFE, in Huanchaco, Peru.",
+      "We built two classrooms, repaired the water system and ran workshops for 50 kids. I managed a €10k budget and helped with fundraising all year."
     ],
-    "frame": "paper",
     "links": [
       {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
+        "label": "Perunidad",
+        "url": "https://perunidad.cs-campus.fr/"
+      },
+      {
+        "label": "More on Instagram",
+        "url": "https://www.instagram.com/p/DOqgFsPjKIB"
       }
     ],
+    "frame": "paper",
     "artStyle": "geometry"
   },
   {
     "id": "paris",
-    "date": "2024",
-    "title": "A new chapter",
+    "date": "2024-09",
+    "title": "Moving to Paris",
     "subtitle": "ICAI × CentraleSupélec",
-    "summary": "A double degree between ICAI and CentraleSupélec. A new place to learn, build, and meet people.",
+    "summary": "Two years at CentraleSupélec, as part of a double degree with ICAI.",
     "body": [
-      "The ICAI and CentraleSupélec double-degree programme, 2024–2026. Engineering studies in France, alongside the BDI, HumaCS and CheerUp! student associations."
+      "In 2024 I moved to Paris to study at CentraleSupélec, as part of a double degree with ICAI. New country, new language.",
+      "Outside class I was Secretary-General of the Bureau de l'International, helping 300+ international students settle in. I also joined CheerUp!, which supports young cancer patients."
     ],
-    "frame": "silver",
     "links": [
       {
-        "label": "LinkedIn",
-        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
+        "label": "CentraleSupélec",
+        "url": "https://www.centralesupelec.fr/"
+      },
+      {
+        "label": "CheerUp!",
+        "url": "https://www.cheerup-cs.fr/"
       }
     ],
+    "frame": "silver",
     "artStyle": "field"
   }
 ];
