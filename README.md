@@ -1,83 +1,60 @@
-# rfml.me immersive gallery
+# A small collection
 
-An ultra-minimal portfolio that renders a floating 3D gallery using React 18 and Three.js directly in the browser (no build pipeline required).
+Personal gallery and journal for [rfml.me](https://rfml.me). Plain HTML, CSS and JavaScript, without a build step or runtime dependencies.
 
-## Project layout
+On a computer, every frame hangs on one single board, sort of like the app grid of an Apple Watch. Drag to move around and use the mouse wheel (or pinch) to zoom, up to a limit. Frames get smaller towards the edges of the screen, and each one floats and tilts a bit on its own rhythm. Hover or keyboard focus opens a small side preview. Focusing a frame with the keyboard also brings it to the centre.
 
-```
-.
-├── index.html           # Lightweight entry point that wires styles + modules
-├── styles/
-│   └── main.css         # Global typography, overlay, and status styling
-└── src/
-    ├── main.js          # Boots the React app and injects it into the page
-    ├── GalleryApp.js    # React component + Three.js scene logic
-    ├── projects.js      # Source of truth for every artwork/frame
-    └── utils/
-        └── easings.js   # Reusable easing helpers for liquid transitions
+On phones the gallery keeps its pages of four frames. On touch screens, tap once to preview, then again to read. The book icon opens the same collection in date order.
+
+## Run locally
+
+```sh
+python -m http.server 4173 --bind 127.0.0.1
 ```
 
-All code is served as native ES modules. You can open `index.html` directly in a modern browser or host the folder on any static web server (GitHub Pages, Netlify, etc.).
+Open http://127.0.0.1:4173. Serve over HTTP, rather than opening `index.html` directly. Publish the folder through the existing GitHub Pages setup when ready. `CNAME`, `/gh` and `/in` are preserved.
 
-## Editing or adding projects
+## Add a note, project or milestone
 
-1. Open `src/projects.js`.
-2. Each entry in the exported array becomes a frame in the gallery:
+Add an object to `src/posts.js` for a life update, or `src/projects.js` for existing project content. Both files appear in the same gallery and journal. There are no public categories.
 
-   ```js
-   {
-     title: "Parametric Skyline",
-     date: "May 2025 | 9 wks",
-     category: "3D Design",     // optional tag shown in the overlay
-     image: "https://…",        // HTTPS image URL with CORS enabled
-     gallery: [{ src: "https://…", caption: "Optional detail view" }],
-     description: [
-       "Short, museum-quality copy (2–4 sentences).",
-       "You can supply multiple strings; each becomes a paragraph."
-     ],
-     technologies: ["Rhino", "Grasshopper", "Unreal Engine"],
-     highlights: ["Key challenge solved", "Notable metric or outcome"],
-     links: [{ label: "Process Journal", url: "https://…" }],
-     variant: "visual"          // optional: visual | technical | concept
-   }
-   ```
+```js
+{
+  id: 'a-day-worth-keeping', // Unique, permanent URL and painting seed.
+  date: '2026-09-13',       // YYYY, YYYY-MM or YYYY-MM-DD.
+  title: 'A day worth keeping',
+  summary: 'One short sentence for the preview.',
+  body: ['A paragraph.', 'Another paragraph.'],
+  frame: 'oak',            // oak, ink, silver or paper.
+  links: []
+}
+```
 
-3. Add, remove, or reorder items as needed. The circular layout, floating orbits, lazy loading, and navigation automatically adapt to whatever you supply.
+This is a format example, not a published life event. Add real sporting milestones exactly the same way. `body` accepts plain-text paragraphs. Optional `image` and `imageNote` add a photograph inside the entry; the cover stays abstract. Optional `artSeed` changes the painting without changing its URL.
 
-**Tips**
-- Prefer high-resolution images served over HTTPS (Unsplash, your CDN, etc.).
-- Keep titles concise; anything too wide will be wrapped inside the frame label.
-- Supplying optional fields (`gallery`, `description`, `technologies`, `highlights`, `links`) automatically enriches the private viewing room and lightbox experience.
-- The gallery is deterministic – no random collisions – so you don’t need to tweak positioning when the list grows.
+Every entry gets a procedural cover from `src/paintings.js`. The same seed gives the same painting, including after refresh or when adding more entries. No AI images, no external image service and no manual artwork step. There are seven techniques:
 
-## Customising the look
+- `mineral`: warped noise, like agate or marble
+- `watercolor`: translucent washes that bleed and dry unevenly
+- `field`: soft stacked colour fields
+- `geometry`: printed tiles of circles, arcs and stripes
+- `sculpture`: soft clay forms lit from a height map
+- `relief`: stacked paper layers with cast shadows
+- `cellular`: bevelled glass tiles
 
-- Adjust colours, typography, and overlay styling in `styles/main.css`.
-- Update light / motion behaviour inside `src/GalleryApp.js` (search for `const ambientLight` or the orbit configuration block around the top of the file).
+Optional `artStyle` picks one of them. Omit it and the seed picks one. The current entries set it by hand so that two neighbouring frames never share a technique. Paintings are drawn one after the other once the page loads, so the gallery keeps responding while they appear.
 
-## Developing locally
+`featured` in `src/main.js` decides the centre of the board and the six frames around it. The remaining entries fill the next rings. Frame shapes, the lens and the zoom limits are right below it. Phone wall positions are in `styles/main.css`.
 
-Because everything is pure static assets, you can:
+Entries have shareable addresses such as `/#entry/traffic`. `/#journal` opens the chronological view. The pause button and the system's reduced-motion preference stop frame movement. The reader uses a native dialog with keyboard focus containment and Escape to close.
 
-1. Open `index.html` directly in Chrome/Edge/Safari (recommended) **or**
-2. Serve the folder with any static file server, e.g.
+## Content and references
 
-   ```bash
-   npx serve .
-   ```
+- [GitHub](https://github.com/rvfamaestre): project descriptions checked against public repository READMEs. Existing local project text was retained and shortened.
+- [LinkedIn](https://es.linkedin.com/in/rafael-maestre-lopez/es): public indexed profile information. Direct access required sign-in. No private profile content was accessed.
+- Visual references: [Dennis Snellenberg](https://dennissnellenberg.com/) for spacing and restrained interaction, and [Bruno Simon](https://bruno-simon.com/) for the portfolio-as-a-place idea. The draggable board takes its idea from the Apple Watch app grid.
+- The two life entries use publicly documented education and volunteering. No sporting achievements or personal reflections have been invented.
+- `assets/robot.jpg` is an original track image from [cvt-vac](https://github.com/rvfamaestre/cvt-vac), shown inside that project's entry.
+- Icons: [Lucide](https://lucide.dev/), ISC licence in `assets/icons/LICENSE`.
 
-Changes to the JavaScript modules or CSS are picked up on refresh—no bundler, transpiler, or build step required.
-
-## Deployment
-
-Push the repository to any static host (GitHub Pages, Cloudflare Pages, Netlify, Vercel static, S3 + CloudFront…). The `CNAME` file is already configured for `rfml.me`.
-
-## Browser support
-
-The site targets evergreen browsers that support:
-
-- ES module imports
-- WebGL / Three.js
-- Smooth wheel or trackpad scrolling
-
-Navigation is intentionally simple—hover to highlight, scroll to zoom, click to enter—so no pointer-lock or keyboard controls are required.
+This redesign is a local working version. Publishing requires the normal repository deployment. A copy of the pre-existing local changes was saved outside the repository before the rewrite.

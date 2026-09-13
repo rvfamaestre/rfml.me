@@ -1,19 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="An immersive 3D portfolio gallery by Rafael Maestre López.">
-  <title>rfml — immersive portfolio</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6f2">
+  <meta name="description" content="A small collection of projects, ideas and moments by Rafael Maestre López.">
+  <meta property="og:title" content="Rafael Maestre López — A small collection">
+  <meta property="og:description" content="Projects, ideas and moments. A personal gallery, still growing.">
+  <meta property="og:image" content="https://rfml.me/assets/social.png">
+  <meta property="og:url" content="https://rfml.me/">
+  <link rel="icon" href="./assets/icons/panels-top-left.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles/main.css">
-  <script>
-    if (location.hostname !== "localhost" && location.protocol === "http:") {
-      location.replace(`https://${location.host}${location.pathname}${location.search}${location.hash}`);
-    }
-  </script>
+  <title>Rafael Maestre López — A small collection</title>
 </head>
 <body>
-  <div id="root"></div>
+  <a class="skip-link" href="#journal">Read the journal</a>
+  <main>
+    <h1 class="sr-only">Rafael Maestre López. A small collection of projects and moments.</h1>
+    <section id="gallery" aria-label="Gallery">
+      <div id="wall" class="wall"></div>
+      <nav id="pages" class="pages" aria-label="Gallery walls"></nav>
+      <p id="gallery-status" class="sr-only" role="status"></p>
+    </section>
+    <section id="journal" class="journal" hidden aria-labelledby="journal-title">
+      <header><p class="eyebrow">Rafael Maestre López</p><h2 id="journal-title">A few things,<br><em>along the way.</em></h2><p>Projects, ideas, and life in between. An ongoing collection.</p></header>
+      <div id="entries"></div>
+      <p class="endnote">Still adding to the collection.</p>
+    </section>
+  </main>
+  <aside id="preview" class="preview" aria-label="Entry preview" hidden></aside>
+  <nav class="dock" aria-label="Views">
+    <a href="#gallery" aria-label="Gallery" title="Gallery"><img src="./assets/icons/panels-top-left.svg" alt=""></a>
+    <a href="#journal" aria-label="Journal" title="Journal"><img src="./assets/icons/book-open.svg" alt=""></a>
+    <span class="divider"></span>
+    <button id="motion" aria-label="Pause movement" title="Pause movement" aria-pressed="false"><img src="./assets/icons/pause.svg" alt=""></button>
+    <a href="#about" aria-label="About Rafael" title="About Rafael"><img src="./assets/icons/user-round.svg" alt=""></a>
+  </nav>
+  <dialog id="reader" aria-labelledby="reader-title">
+    <button id="close-reader" class="close" aria-label="Close entry"><img src="./assets/icons/x.svg" alt=""></button>
+    <article id="article"></article>
+  </dialog>
+  <noscript><p class="no-script">This gallery needs JavaScript. Find my work on <a href="https://github.com/rvfamaestre">GitHub</a> and <a href="https://www.linkedin.com/in/rafael-maestre-lopez/">LinkedIn</a>.</p></noscript>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
