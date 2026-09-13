@@ -2,9 +2,9 @@
 
 Personal gallery and journal for [rfml.me](https://rfml.me). Plain HTML, CSS and JavaScript, no build step. The only thing loaded from outside is KaTeX, and only when an entry has a formula.
 
-On a computer, every frame hangs on one single board, sort of like the app grid of an Apple Watch. Drag to move around and use the mouse wheel (or pinch) to zoom, up to a limit. Frames get smaller towards the edges of the screen, and each one floats and tilts a bit on its own rhythm. Hover or keyboard focus opens a small side preview. Focusing a frame with the keyboard also brings it to the centre.
+On a computer, every frame hangs on one single board, sort of like the app grid of an Apple Watch. Drag to move around and use the mouse wheel (or pinch) to zoom, up to a limit. Frames get smaller towards the edges of the screen, and each one floats and tilts a bit on its own rhythm. Hover or keyboard focus slides in a panel on the left with the details. Focusing a frame with the keyboard also brings it to the centre.
 
-On phones the gallery keeps its pages of four frames. Swipe left or right to change page, or tap the dots. Tap a frame once to see a small card at the top or bottom of the screen, never on top of that frame. Tap the card, or the frame again, to read. The book icon opens the same collection in date order, and the person icon opens the about page with the CV. The pause button and the reduced motion setting of the system stop the movement.
+On phones the gallery keeps its pages of four frames. Swipe left or right to change page, or tap the dots. Tap a frame once to see a small bar with its name above the menu, then tap the bar, or the frame again, to read. Entries open as a sheet from the bottom. The book icon opens the same collection in date order, and the person icon opens the about page with the CV. The pause button and the reduced motion setting of the system stop the movement.
 
 ## Run locally
 
@@ -39,7 +39,7 @@ Add an object to `src/projects.js` or `src/posts.js`. Both show up in the same g
 - `id` is the permanent address (`/#entry/a-day-worth-keeping`) and the seed of the painting.
 - `date` can be `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
 - `tools`, `image`, `formula` and `links` are optional. `formula` is LaTeX, rendered with KaTeX.
-- Each tool shows its logo from `assets/tools`. The file name is the tool name in lowercase without spaces, so `Google Calendar` is `assets/tools/googlecalendar.svg`.
+- Tool logos are listed in `src/tools.js` and the files live in `assets/tools`. A tool that isn't listed there just shows its name.
 - `frame` is `oak`, `ink`, `silver` or `paper`.
 - `artSeed` changes the painting without changing the address; `artStyle` picks the technique and `artPalette` the palette.
 
@@ -68,6 +68,6 @@ pdftoppm -jpeg -singlefile -scale-to-x 560 -scale-to-y -1 assets/pdfs/CV_EN_RML.
 - Formulas are rendered with [KaTeX](https://katex.org/) (MIT licence), loaded from jsDelivr.
 - Visual references: [Dennis Snellenberg](https://dennissnellenberg.com/) for spacing and restrained interaction, and [Bruno Simon](https://bruno-simon.com/) for the portfolio-as-a-place idea. The draggable board takes its idea from the Apple Watch app grid.
 - Icons: [Lucide](https://lucide.dev/), ISC licence in `assets/icons/LICENSE`.
-- Tool logos: Simple Icons, Devicon and Lucide, listed in [assets/tools/SOURCES.md](assets/tools/SOURCES.md). The logos belong to their brands.
+- Tool logos: the official ones, with their sources in [assets/tools/SOURCES.md](assets/tools/SOURCES.md). They belong to their brands.
 
 Source checks for every entry are in [docs/content-review.md](docs/content-review.md).

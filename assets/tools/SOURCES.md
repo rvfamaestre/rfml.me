@@ -1,8 +1,8 @@
-# Tool marks
+# Tool logos
 
-Brand marks belong to their owners. They only show which tools a project used.
+These are the official logos of each tool and they belong to their owners. They are only here to show which tools a project used. Some are cropped to the symbol without the wordmark, and the PNGs are scaled down.
 
-- [Simple Icons](https://github.com/simple-icons/simple-icons) (CC0): Python, pandas, NumPy, SciPy, Jupyter, Optuna, OpenCV, Raspberry Pi, Arduino, Notion, Google Calendar, n8n, LaTeX, LTspice, WordPress, JavaScript and PHP.
-- [Devicon](https://github.com/devicons/devicon) (MIT, `DEVICON-LICENSE`): MATLAB, R, PyTorch and Matplotlib.
-- [Lucide](https://lucide.dev/) (ISC, `../icons/LICENSE`): plain symbols for Excel, VBA, Pygame and COMSOL.
-- Drawn for this site, not brand logos: Altair Inspire, Simulink, Stateflow, CVXPY and statsmodels.
+- From Wikimedia Commons copies of the official logos: Python, Jupyter, Notion, Google Calendar, WordPress, Excel, MATLAB, Simulink, Arduino, the LaTeX Project bird, Visual Basic for Applications, Altair and COMSOL.
+- From each project's own repository: PyTorch, NumPy, SciPy, Matplotlib, pandas, statsmodels, OpenCV, Pygame, Optuna, CVXPY and n8n.
+- From their official sites: R (r-project.org), PHP (php.net) and Raspberry Pi (raspberrypi.com).
+- JavaScript, LTspice and Stateflow only show their name. JavaScript has no official logo, and I couldn't find an official source for the other two.

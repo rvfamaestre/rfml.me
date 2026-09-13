@@ -3,11 +3,11 @@ export default [
     "id": "perunidad",
     "date": "2024-10",
     "title": "Building classrooms in Peru",
-    "subtitle": "Perunidad · NAFE, Huanchaco",
-    "summary": "Six weeks in Huanchaco with a team of four. Two classrooms, water repairs and workshops for kids.",
+    "subtitle": "With Perunidad and NAFE, in Huanchaco",
+    "summary": "Six weeks in Huanchaco with a team of four, building classrooms and running workshops for kids.",
     "body": [
       "With Perunidad I led a team of four on a six-week project with NAFE, in Huanchaco, Peru.",
-      "We built two classrooms, repaired the water system and ran workshops for 50 kids. I managed a €10k budget and helped with fundraising all year."
+      "We built two classrooms, repaired the water infrastructure and ran workshops for 50 kids. I also managed a €10k budget and helped with fundraising during the whole year."
     ],
     "links": [
       {
@@ -27,11 +27,11 @@ export default [
     "id": "paris",
     "date": "2024-09",
     "title": "Moving to Paris",
-    "subtitle": "ICAI × CentraleSupélec",
-    "summary": "Two years at CentraleSupélec, as part of a double degree with ICAI.",
+    "subtitle": "Double degree between ICAI and CentraleSupélec",
+    "summary": "Two years at CentraleSupélec, as part of my double degree with ICAI.",
     "body": [
-      "In 2024 I moved to Paris to study at CentraleSupélec, as part of a double degree with ICAI. New country, new language.",
-      "Outside class I was Secretary-General of the Bureau de l'International, helping 300+ international students settle in. I also joined CheerUp!, which supports young cancer patients."
+      "In 2024 I moved to Paris to study at CentraleSupélec, as part of a double degree with ICAI. New country, new language, and I went there alone.",
+      "Outside class I was Secretary-General of the Bureau de l'International, where we helped more than 300 international students settle in. I also joined CheerUp!, which supports young cancer patients."
     ],
     "links": [
       {
