@@ -4,7 +4,7 @@ Personal gallery and journal for [rfml.me](https://rfml.me). Plain HTML, CSS and
 
 On a computer, every frame hangs on one single board, sort of like the app grid of an Apple Watch. Drag to move around and use the mouse wheel (or pinch) to zoom, up to a limit. Frames get smaller towards the edges of the screen, and each one floats and tilts a bit on its own rhythm. Hover or keyboard focus opens a small side preview. Focusing a frame with the keyboard also brings it to the centre.
 
-On phones the gallery keeps its pages of four frames. On touch screens, tap once to preview, then again to read. The book icon opens the same collection in date order, and the person icon opens the about page with the CV. The pause button and the reduced motion setting of the system stop the movement.
+On phones the gallery keeps its pages of four frames. Swipe left or right to change page, or tap the dots. Tap a frame once to see a small card at the top or bottom of the screen, never on top of that frame. Tap the card, or the frame again, to read. The book icon opens the same collection in date order, and the person icon opens the about page with the CV. The pause button and the reduced motion setting of the system stop the movement.
 
 ## Run locally
 
@@ -41,23 +41,15 @@ Add an object to `src/projects.js` or `src/posts.js`. Both show up in the same g
 - `tools`, `image`, `formula` and `links` are optional. `formula` is LaTeX, rendered with KaTeX.
 - Each tool shows its logo from `assets/tools`. The file name is the tool name in lowercase without spaces, so `Google Calendar` is `assets/tools/googlecalendar.svg`.
 - `frame` is `oak`, `ink`, `silver` or `paper`.
-- `artSeed` changes the painting without changing the address, and `artStyle` picks the technique.
+- `artSeed` changes the painting without changing the address; `artStyle` picks the technique and `artPalette` the palette.
 
 This is a format example, not a real entry. Sport milestones or anything else go exactly the same way.
 
 ## Paintings
 
-Every entry gets a procedural cover from `src/paintings.js`. The same seed gives the same painting, including after refresh or when adding more entries. No AI images, no external image service and no manual artwork step. There are seven techniques:
+Every entry gets a procedural cover from `src/paintings.js`. The same seed gives the same painting, including after refresh or when adding more entries. No AI images, no external image service and no manual artwork step. There are 18 techniques: mineral, watercolor, field, relief, cellular, veils, geometry, halftone, squeegee, folds, collage, glow, marbling, terrazzo, packing, albers, vasarely and dither. None of them is made of plain lines or draws recognizable things.
 
-- `mineral`: warped noise, like agate or marble
-- `watercolor`: translucent washes that bleed and dry unevenly
-- `field`: soft stacked colour fields
-- `geometry`: printed tiles of circles, arcs and stripes
-- `sculpture`: soft clay forms lit from a height map
-- `relief`: stacked paper layers with cast shadows
-- `cellular`: bevelled glass tiles
-
-Optional `artStyle` picks one of them. Omit it and the seed picks one. The current entries set it by hand so that two neighbouring frames never share a technique. Paintings are drawn one after the other once the page loads, so the gallery keeps responding while they appear.
+`artStyle` picks a technique and `artPalette` a palette. Each of the 18 current entries has its own technique and its own palette, so no two frames on the board look alike. The seed varies the composition within that combination and remains stable on reload. Covers are drawn one at a time so the page stays responsive.
 
 `featured` in `src/main.js` decides the centre of the board and the six frames around it. The remaining entries fill the next rings. Frame shapes, the lens and the zoom limits are right below it. Phone wall positions are in `styles/main.css`.
 
@@ -76,4 +68,6 @@ pdftoppm -jpeg -singlefile -scale-to-x 560 -scale-to-y -1 assets/pdfs/CV_EN_RML.
 - Formulas are rendered with [KaTeX](https://katex.org/) (MIT licence), loaded from jsDelivr.
 - Visual references: [Dennis Snellenberg](https://dennissnellenberg.com/) for spacing and restrained interaction, and [Bruno Simon](https://bruno-simon.com/) for the portfolio-as-a-place idea. The draggable board takes its idea from the Apple Watch app grid.
 - Icons: [Lucide](https://lucide.dev/), ISC licence in `assets/icons/LICENSE`.
-- Tool logos: [Simple Icons](https://simpleicons.org/) (CC0), the MATLAB one from [Devicon](https://devicon.dev/) (MIT), and a Lucide sheet icon for Excel. The logos belong to their brands.
+- Tool logos: Simple Icons, Devicon and Lucide, listed in [assets/tools/SOURCES.md](assets/tools/SOURCES.md). The logos belong to their brands.
+
+Source checks for every entry are in [docs/content-review.md](docs/content-review.md).

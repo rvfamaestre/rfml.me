@@ -20,7 +20,8 @@ export default [
       }
     ],
     "frame": "paper",
-    "artStyle": "geometry"
+    "artStyle": "watercolor",
+    "artPalette": 16
   },
   {
     "id": "paris",
@@ -43,6 +44,7 @@ export default [
       }
     ],
     "frame": "silver",
-    "artStyle": "field"
+    "artStyle": "mineral",
+    "artPalette": 17
   }
 ];

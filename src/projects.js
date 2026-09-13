@@ -6,13 +6,18 @@ export default [
     "subtitle": "Bachelor's thesis · L2S lab",
     "tools": [
       "Python",
-      "Optuna"
+      "PyTorch",
+      "NumPy",
+      "SciPy",
+      "Matplotlib",
+      "Optuna",
+      "LaTeX"
     ],
     "summary": "My thesis. An RL controller for self-driving cars that makes traffic flow smoother.",
     "body": [
       "Imagine you're on the highway and a car brakes. The next one brakes a bit more, and a few cars later everyone is stopped. There was no accident. That's a phantom traffic jam, and it's what my thesis is about.",
-      "I kept a classic cruise control model and added a small reinforcement learning layer on top. It looks further than just the car ahead and makes small corrections.",
-      "In simulation it cut speed variation by 76%, and fuel use and CO₂ by 54%, compared with human drivers. I'm really proud of this one."
+      "The automated cars keep a classic cooperative cruise control. On top, a small reinforcement learning policy (SAC) looks at the traffic ahead and nudges the time gap the controller asks for, never by more than 10%.",
+      "In the main test, a 300 m ring road with 22 cars and half of them automated, the policy cut speed dispersion by 33.4% compared with the rule alone. Estimated fuel use and CO₂ fell 54.3% compared with no control at all."
     ],
     "links": [
       {
@@ -21,7 +26,10 @@ export default [
       }
     ],
     "frame": "ink",
-    "artStyle": "mineral"
+    "artStyle": "squeegee",
+    "artPalette": 0,
+    "formula": "\\begin{gathered}h_i=\\alpha_i\\,h_0\\\\\\alpha_i=\\operatorname{clip}\\!\\left(\\mathring{\\alpha}_i+\\Delta\\alpha_i,\\ \\alpha_{\\min},\\ \\alpha_{\\max}\\right)\\\\\\left|\\Delta\\alpha_i\\right|\\le 0.1\\end{gathered}",
+    "formulaNote": "The time gap each automated car asks for. The rule sets α̊ from the traffic ahead, and the learned policy only adds Δα, capped at 0.1."
   },
   {
     "id": "lattice",
@@ -29,18 +37,21 @@ export default [
     "title": "3D printing, three ways",
     "subtitle": "Additive manufacturing · CentraleSupélec",
     "tools": [
-      "COMSOL"
+      "COMSOL",
+      "MATLAB",
+      "Altair Inspire"
     ],
     "summary": "Three small studies on 3D printed parts: heat, weight and lattices.",
     "body": [
       "Three projects in one course, each one about a different side of 3D printing.",
-      "First I used COMSOL to see how induction heating warms up a part. Then I worked on making a part lighter without making it weaker. The last one was about TPMS lattices, those sponge-like shapes that are really hard to make any other way."
+      "First, induction heating in a frying pan, simulated in COMSOL. Then a lighter suspension wishbone, optimized in Altair Inspire. Last, a MATLAB script that builds TPMS lattices like the gyroid."
     ],
-    "formula": "\\sin x \\cos y + \\sin y \\cos z + \\sin z \\cos x = 0",
-    "formulaNote": "The gyroid, one of the best-known TPMS shapes.",
+    "formula": "\\sin x\\cos y+\\sin y\\cos z+\\sin z\\cos x>t",
+    "formulaNote": "The gyroid. My script keeps the solid where this is above t, and changes t to make each part of the lattice denser or lighter.",
     "links": [],
     "frame": "oak",
-    "artStyle": "sculpture"
+    "artStyle": "cellular",
+    "artPalette": 1
   },
   {
     "id": "scheduler",
@@ -66,21 +77,22 @@ export default [
       }
     ],
     "frame": "paper",
-    "artStyle": "geometry"
+    "artStyle": "geometry",
+    "artPalette": 15
   },
   {
     "id": "azores",
     "date": "2024",
     "title": "Road to Success, Azores",
     "subtitle": "Entrepreneurship bootcamp",
-    "summary": "A bootcamp in the Azores about ideas, pitching and people.",
+    "summary": "An entrepreneurship bootcamp in the Azores.",
     "body": [
-      "Not a technical project for once.",
-      "It was all about ideas: how to explain one fast, share it with people you just met, and make it better with their feedback. A very international group, in the middle of the Atlantic."
+      "Road to Success was an entrepreneurship bootcamp I took part in, in the Azores."
     ],
     "links": [],
     "frame": "paper",
-    "artStyle": "mineral"
+    "artStyle": "marbling",
+    "artPalette": 5
   },
   {
     "id": "mit",
@@ -90,13 +102,17 @@ export default [
     "summary": "MIT's online course on the maths behind quantitative finance.",
     "body": [
       "Probability, stochastic processes, Monte Carlo and optimization, all applied to finance.",
-      "What I liked most is how theory and code go together. You write a model, simulate it, and then use it to make a decision."
+      "In the R exercises I simulated stock prices and priced options with Monte Carlo."
     ],
-    "formula": "dS_t = \\mu S_t \\, dt + \\sigma S_t \\, dW_t",
-    "formulaNote": "Geometric Brownian motion, the classic model for a stock price.",
+    "formula": "\\begin{gathered}C_0\\approx e^{-rT}\\,\\frac{1}{N}\\sum_{i=1}^{N}\\max\\!\\left(S_T^{(i)}-K,\\,0\\right)\\\\S_T^{(i)}=S_0\\,e^{\\left(r-\\sigma^2/2\\right)T+\\sigma\\sqrt{T}\\,Z_i}\\end{gathered}",
+    "formulaNote": "How I priced a call option in R: simulate 10,000 final prices, average the payoff and discount it. Z is a standard normal draw.",
     "links": [],
     "frame": "silver",
-    "artStyle": "watercolor"
+    "artStyle": "halftone",
+    "tools": [
+      "R"
+    ],
+    "artPalette": 4
   },
   {
     "id": "life",
@@ -105,12 +121,13 @@ export default [
     "subtitle": "Coding Weeks · CentraleSupélec",
     "tools": [
       "Python",
+      "Pygame",
       "LaTeX"
     ],
     "summary": "Place a few cells, press play and let Conway's rules do the rest.",
     "body": [
       "You get a small zone to draw some living cells. Then you press play and Conway's rules take over. You win when the cells reach every blue target.",
-      "We were six and worked in short sprints: first the Game of Life in Pygame, then levels, a menu, a level creator and music. Later I cleaned up the code and wrote the docs."
+      "We were six and worked in short sprints: first the Game of Life in Pygame, then levels, a menu, a level creator and music. Later I put the code on GitHub."
     ],
     "formula": "s_{t+1} = \\begin{cases} 1 & \\text{if } n = 3 \\text{, or if } s_t = 1 \\text{ and } n = 2 \\\\ 0 & \\text{otherwise} \\end{cases}",
     "formulaNote": "The whole rule. n is the number of living neighbors.",
@@ -131,7 +148,8 @@ export default [
       }
     ],
     "frame": "ink",
-    "artStyle": "cellular"
+    "artStyle": "dither",
+    "artPalette": 9
   },
   {
     "id": "robot",
@@ -143,7 +161,9 @@ export default [
       "OpenCV",
       "Raspberry Pi",
       "Arduino",
-      "MATLAB"
+      "MATLAB",
+      "Simulink",
+      "Stateflow"
     ],
     "summary": "It follows lines, spots crossings and finds the shortest way from A to B.",
     "body": [
@@ -163,7 +183,8 @@ export default [
       }
     ],
     "frame": "oak",
-    "artStyle": "relief"
+    "artStyle": "folds",
+    "artPalette": 8
   },
   {
     "id": "portfolio",
@@ -174,17 +195,20 @@ export default [
       "Python",
       "Jupyter",
       "pandas",
-      "NumPy"
+      "NumPy",
+      "CVXPY",
+      "statsmodels",
+      "Matplotlib"
     ],
     "summary": "20 cryptos, some maths and strict rules on risk.",
     "body": [
-      "Five of us built a portfolio of 20 cryptos plus cash. At each rebalance we estimate returns and risk, then pick the weights with CVXPY. The rules: long only, volatility under 25% and a minimum of diversification.",
-      "In the backtest our final strategy made 13.4% with 6.4% volatility. Bitcoin lost 4.4% with 54.9%."
+      "Five of us built a portfolio of 20 cryptos plus cash. At each rebalance we estimate returns with a moving average and risk with a GARCH model, then pick the weights with CVXPY. The rules: no short selling, volatility under 25% and enough diversification.",
+      "In our backtest the final strategy returned 13.36% with 6.38% volatility. Bitcoin lost 4.4% with 54.9%."
     ],
-    "formula": "w^* = \\arg\\min_{w} \\; \\tfrac{1}{2} \\, w^\\top \\Sigma \\, w - \\gamma \\, \\mu^\\top w \\quad \\text{with} \\quad \\textstyle\\sum_i w_i = 1, \\; w_i \\ge 0",
-    "formulaNote": "How we chose the weights, balancing risk against expected return.",
+    "formula": "\\begin{gathered} \\min_w\\; \\tfrac12 w^\\top\\Sigma w-\\gamma\\mu^\\top w \\\\ \\mathbf1^\\top w=1,\\quad w\\ge0,\\quad w^\\top\\Sigma w\\le\\sigma_{\\max}^2 \\\\ N\\sqrt{d_{\\min}}\\,w_i\\le\\sum_{j\\in\\mathcal R}w_j,\\quad i\\in\\mathcal R \\end{gathered}",
+    "formulaNote": "What we solved at each rebalance. μ and Σ are the estimated returns and risk, and γ sets how much we chase return. The last line keeps any single crypto from taking too big a share of the crypto part.",
     "image": "assets/work/portfolio.jpg",
-    "imageNote": "Our portfolio (blue) against Bitcoin (orange), 2022 to 2024.",
+    "imageNote": "Our portfolio (blue) against Bitcoin (orange), from 2022 to 2024.",
     "links": [
       {
         "label": "Code on GitHub",
@@ -196,7 +220,8 @@ export default [
       }
     ],
     "frame": "silver",
-    "artStyle": "field"
+    "artStyle": "albers",
+    "artPalette": 7
   },
   {
     "id": "reinforcement",
@@ -205,13 +230,19 @@ export default [
     "subtitle": "CS234",
     "summary": "How agents learn by trying things, step by step.",
     "body": [
-      "I took it while working on my thesis, and it helped a lot. It goes step by step: how to set up the problem, value methods, policy methods and exploration."
+      "I took it while starting my thesis on RL. The assignments go from value and policy iteration to deep RL, PPO, RLHF and DPO."
     ],
-    "formula": "Q^*(s,a) = \\mathbb{E}\\left[\\, r + \\gamma \\max_{a'} Q^*(s',a') \\,\\right]",
-    "formulaNote": "The Bellman equation, where a lot of it starts.",
+    "formula": "Q^*(s,a)=\\mathbb{E}\\!\\left[r+\\gamma\\max_{a\\prime}Q^*(s\\prime,a\\prime)\\mid s,a\\right]",
+    "formulaNote": "Bellman optimality, the idea behind value iteration in the first assignment. γ is the discount factor.",
     "links": [],
     "frame": "paper",
-    "artStyle": "sculpture"
+    "artStyle": "packing",
+    "tools": [
+      "Python",
+      "PyTorch",
+      "NumPy"
+    ],
+    "artPalette": 6
   },
   {
     "id": "regions",
@@ -220,11 +251,17 @@ export default [
     "subtitle": "Literature review",
     "summary": "Why poor regions often stay poor, long after the reasons are gone.",
     "body": [
-      "Some regions stay behind for decades, even when the original reasons are long gone. I read around three ideas: institutions that get stuck, transport that keeps giving some places an edge, and cities that grow just because they already grew."
+      "I co-wrote a literature review on why some regions stay behind for decades. We compared three explanations, extractive institutions, transport infrastructure and cities that keep growing because they already grew, and what each one means for policy."
     ],
-    "links": [],
+    "links": [
+      {
+        "label": "Project on LinkedIn",
+        "url": "https://www.linkedin.com/in/rafael-maestre-lopez/"
+      }
+    ],
     "frame": "oak",
-    "artStyle": "relief"
+    "artStyle": "relief",
+    "artPalette": 2
   },
   {
     "id": "databox",
@@ -233,11 +270,17 @@ export default [
     "subtitle": "Supply chain training, online",
     "summary": "Bringing a supply chain training course to the web.",
     "body": [
-      "Factory DataBox teaches supply chain. I helped bring it online: I reshaped the course for the browser, improved the exercises and got it ready for more languages. Traffic and SEO were part of the job too."
+      "Factory DataBox teaches supply chain. We brought the course online with a WordPress plugin: interactive exercises with automatic feedback, a small data lab and room for more languages."
     ],
     "links": [],
     "frame": "ink",
-    "artStyle": "geometry"
+    "artStyle": "collage",
+    "tools": [
+      "WordPress",
+      "JavaScript",
+      "PHP"
+    ],
+    "artPalette": 10
   },
   {
     "id": "labor",
@@ -248,17 +291,19 @@ export default [
       "Python",
       "pandas",
       "NumPy",
+      "statsmodels",
+      "Matplotlib",
       "LaTeX"
     ],
     "summary": "I tested a famous economics paper in Python. The answer depends on the years you pick.",
     "body": [
-      "Karabarbounis and Neiman showed that as machines got cheaper, workers got a smaller slice of income. I wanted to see how solid that is.",
-      "So I rebuilt the core of it in Python and played with countries and time windows. With long, clean data the link shows up. For the Americas it even flips."
+      "Karabarbounis and Neiman linked the global fall of the labor share to cheaper investment goods. I rebuilt the core of their test in Python to see how solid that link is.",
+      "It depends a lot on the countries and years you pick, and it even flips sign for the Americas. So this is a sensitivity study, not a full replication."
     ],
-    "formula": "\\beta^{s}_i = a + b \\, \\beta^{\\xi}_i + \\varepsilon_i",
-    "formulaNote": "One point per country: its labor share trend against its investment price trend.",
+    "formula": "\\beta_i^{\\log s}=a+b\\,\\beta_i^{\\log\\xi}+\\varepsilon_i",
+    "formulaNote": "One dot per country: the trend of its labor share against the trend of investment prices, both in logs.",
     "image": "assets/work/labor.jpg",
-    "imageNote": "From 1980 to 2000. Where investment got cheaper faster, the labor share fell more.",
+    "imageNote": "1980 to 2000, one dot per country. In this window the slope is positive.",
     "links": [
       {
         "label": "Code on GitHub",
@@ -274,22 +319,28 @@ export default [
       }
     ],
     "frame": "paper",
-    "artStyle": "cellular"
+    "artStyle": "field",
+    "artPalette": 11
   },
   {
     "id": "combustion",
     "date": "2026-01",
-    "title": "Modeling a hydrogen flame",
-    "subtitle": "Combustion course",
-    "summary": "Hydrogen and air, modeled step by step until it ignites.",
+    "title": "Igniting hydrogen with plasma",
+    "subtitle": "Reactive media course · CentraleSupélec",
+    "summary": "A MATLAB model of a hydrogen gas turbine that ignites with tiny plasma pulses.",
     "body": [
-      "Each step adds a bit more reality: first the thermochemistry, then equilibrium, then how fast reactions really go, and finally ignition helped by plasma."
+      "With a classmate, I modeled a hydrogen–air gas turbine as a perfectly stirred reactor in MATLAB. First we found how hot a spark has to be to ignite it. Then we swapped the spark for nanosecond plasma pulses and counted how many it takes."
     ],
-    "formula": "k(T) = A \\, T^{b} \\, e^{-E_a / R T}",
-    "formulaNote": "The Arrhenius law: how fast a reaction goes depending on temperature.",
+    "formula": "\\begin{gathered}\\frac{dY_k}{dt}=\\frac{Y_k^{FG}-Y_k}{\\tau}+\\frac{M_k}{\\rho}\\left(\\dot\\omega_k^{c}+\\dot\\omega_k^{p}\\right)\\\\\\dot E_p=\\frac{E_d}{V_d\\,\\tau_d}\\end{gathered}",
+    "formulaNote": "Each species in the reactor: fresh gas (FG) flows in, and chemistry (ω̇ᶜ) and plasma (ω̇ᵖ) change it. Each pulse also heats the gas at rate Ėₚ.",
     "links": [],
     "frame": "silver",
-    "artStyle": "mineral"
+    "artStyle": "glow",
+    "tools": [
+      "MATLAB",
+      "LaTeX"
+    ],
+    "artPalette": 12
   },
   {
     "id": "adn",
@@ -299,10 +350,9 @@ export default [
     "tools": [
       "n8n"
     ],
-    "summary": "An n8n pipeline that fills in product data for an NGO. The team adopted it.",
+    "summary": "An n8n pipeline with AI agents that sorts donated products. The team adopted it.",
     "body": [
-      "Agence du Don en Nature handles lots of donated products, and each one needs a price, a link, a picture and a category. That was a lot of work by hand.",
-      "I compared a small MVP with an n8n pipeline using AI agents. The n8n one is what the team ended up adopting."
+      "For Agence du Don en Nature, I built an n8n pipeline with AI agents that puts donated products into categories automatically. The team later adopted it internally."
     ],
     "links": [
       {
@@ -311,23 +361,26 @@ export default [
       }
     ],
     "frame": "paper",
-    "artStyle": "field"
+    "artStyle": "terrazzo",
+    "artPalette": 13
   },
   {
     "id": "powertrain",
     "date": "2025-01",
-    "title": "Picking an engine for a Mégane",
+    "title": "Designing a compact car’s powertrain",
     "subtitle": "Powertrain study",
     "tools": [
-      "Excel"
+      "Excel",
+      "VBA"
     ],
-    "summary": "Which engine for a Renault Mégane redesign? Compared in Excel and VBA.",
+    "summary": "Excel and VBA models to pick the engine of a made-up carmaker's compact car.",
     "body": [
-      "Direct injection, turbo, variable valve timing or hybrid? I built a model in Excel and VBA to compare them on performance, fuel use and emissions."
+      "In a group of six, we designed the powertrain of a compact car for a made-up carmaker, with the Mégane and the 308 as rivals. Our Excel and VBA models add direct injection, turbo, variable valve timing and hybrids step by step, and check acceleration, fuel use and CO₂ on the NEDC and WLTP cycles."
     ],
     "links": [],
     "frame": "ink",
-    "artStyle": "sculpture"
+    "artStyle": "vasarely",
+    "artPalette": 14
   },
   {
     "id": "sound",
@@ -335,16 +388,18 @@ export default [
     "title": "Turning sound into light",
     "subtitle": "Electronics lab",
     "tools": [
-      "Arduino"
+      "Arduino",
+      "LTspice"
     ],
     "summary": "A circuit that turns an audio signal into LED light.",
     "body": [
-      "The audio goes through analog filters and a rectifier. Then an Arduino decides how bright the LEDs should be."
+      "We built a circuit that splits the sound from a microphone into bass, mids and highs with three band-pass filters, simulated first in LTspice. Each band is rectified, and an Arduino sets the brightness of its LEDs."
     ],
-    "formula": "f_c = \\frac{1}{2 \\pi R C}",
-    "formulaNote": "The cutoff frequency of a simple RC filter.",
+    "formula": "f_0=\\sqrt{f_1 f_2}=\\frac{1}{2\\pi C}\\sqrt{\\frac{R_1+R_3}{R_1R_2R_3}},\\qquad Q=\\frac{f_0}{f_2-f_1}",
+    "formulaNote": "The band-pass filter behind each channel. We tuned three, to 100 Hz, 1 kHz and 10 kHz, all with Q = 5.",
     "links": [],
     "frame": "silver",
-    "artStyle": "watercolor"
+    "artStyle": "veils",
+    "artPalette": 3
   }
 ];

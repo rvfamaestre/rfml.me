@@ -48,9 +48,9 @@ function paintNext() {
   while (unpainted.length && performance.now() - start < 12) {
     const img = unpainted.shift();
     const entry = entries.find(item => item.id === img.dataset.art);
-    if (!entry) continue;
+    if (!entry || !img.isConnected) continue;
     img.removeAttribute('data-art');
-    img.src = painting(entry.artSeed || entry.id, entry.artStyle);
+    img.src = painting(entry.artSeed || entry.id, entry.artStyle, entry.artPalette);
   }
   if (unpainted.length) paintTimer = setTimeout(paintNext);
 }
@@ -85,6 +85,11 @@ function showPreview(entry, frame) {
   preview.innerHTML = `<p class="eyebrow">${dateLabel(entry.date)}</p><h2>${escape(entry.title)}</h2><p>${escape(entry.summary)}</p>${tools(entry)}<a href="#entry/${escape(entry.id)}">Read more <img src="assets/icons/arrow-right.svg" alt=""></a>`;
   preview.hidden = false;
   const box = frame.getBoundingClientRect();
+  if (compact.matches) {
+    preview.removeAttribute('style');
+    preview.classList.toggle('top', box.top + box.height / 2 > innerHeight / 2);
+    return;
+  }
   const width = preview.offsetWidth;
   const left = box.right + width + 20 < innerWidth ? box.right + 16 : box.left - width - 16;
   preview.style.left = `${Math.max(16, Math.min(innerWidth - width - 16, left))}px`;
@@ -104,23 +109,30 @@ function frame(entry, index) {
   button.addEventListener('pointerenter', event => {
     if (event.pointerType !== 'touch' && !pointers.size && !wall.classList.contains('moving')) showPreview(entry, button);
   });
-  button.addEventListener('pointerleave', scheduleHide);
+  button.addEventListener('pointerleave', event => { if (event.pointerType !== 'touch') scheduleHide(); });
   button.addEventListener('focus', () => {
-    if (!button.matches(':focus-visible')) return;
+    if (touch || !button.matches(':focus-visible')) return;
     if (compact.matches) return showPreview(entry, button);
     camera.settled = () => showPreview(entry, button);
     glide(index);
   });
-  button.addEventListener('blur', scheduleHide);
+  button.addEventListener('blur', () => { if (activeFrame === button) scheduleHide(); });
   let touch = false;
-  button.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
-  button.addEventListener('click', event => {
-    if (touch && event.detail !== 0 && activeFrame !== button) showPreview(entry, button);
+  const activate = previewFirst => {
+    if (previewFirst && activeFrame !== button) showPreview(entry, button);
     else {
       if (!compact.matches) glide(index);
       location.hash = `entry/${entry.id}`;
     }
-    touch = false;
+  };
+  button.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
+  button.addEventListener('pointerup', event => {
+    if (event.pointerType !== 'touch' || dragged >= 5 || swipe?.horizontal) return;
+    event.preventDefault();
+    activate(true);
+  });
+  button.addEventListener('click', event => {
+    if (!touch || event.detail === 0) activate(false);
   });
   slot.append(button);
   return slot;
@@ -175,6 +187,7 @@ function draw() {
     const [x, y, scale] = lens((slot.x - camera.x) * camera.zoom, (slot.y - camera.y) * camera.zoom);
     slot.el.style.transform = `translate(${cx + x - slot.w / 2}px, ${cy + y - slot.h / 2}px) scale(${camera.zoom * scale})`;
     slot.el.style.opacity = clamp((scale - .12) * 4, 0, 1);
+    slot.el.style.pointerEvents = scale > .12 ? '' : 'none';
   }
 }
 function move() {
@@ -260,6 +273,12 @@ function renderBoard() {
   paint(wall);
 }
 function renderGallery() {
+  cancelAnimationFrame(camera.frame);
+  camera.frame = 0;
+  camera.vx = camera.vy = 0;
+  camera.goal = camera.settled = null;
+  pointers.clear();
+  dragged = 0;
   wall.className = compact.matches ? 'wall' : 'board';
   $('#pages').hidden = !compact.matches;
   slots = [];
@@ -305,6 +324,7 @@ wall.addEventListener('pointermove', event => {
 });
 const release = event => {
   const last = pointers.get(event.pointerId);
+  if (!last) return;
   pointers.delete(event.pointerId);
   pinch = 0;
   if (last && event.timeStamp - last[2] > 90) camera.vx = camera.vy = 0;
@@ -319,6 +339,46 @@ wall.addEventListener('wheel', event => {
   const pixels = event.deltaY * [1, 16, innerHeight][event.deltaMode];
   zoomAt(camera.target * Math.exp(-pixels * (event.ctrlKey ? .01 : .0015)), event.clientX, event.clientY);
 }, {passive: false});
+
+let swipe;
+let suppressTap = false;
+document.addEventListener('pointerdown', event => {
+  suppressTap = false;
+  if (!compact.matches || event.pointerType !== 'touch' || $('#gallery').hidden || reader.open || event.target.closest('#pages, .dock')) return;
+  if (!event.isPrimary) { swipe = null; wall.style.translate = ''; return; }
+  swipe = {id: event.pointerId, x: event.clientX, y: event.clientY, dx: 0, horizontal: false};
+});
+document.addEventListener('pointermove', event => {
+  if (!swipe || event.pointerId !== swipe.id) return;
+  const dx = event.clientX - swipe.x, dy = event.clientY - swipe.y;
+  if (!swipe.horizontal) {
+    if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { swipe = null; return; }
+    if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+    swipe.horizontal = suppressTap = true;
+    document.body.setPointerCapture(event.pointerId);
+    hidePreview();
+  }
+  swipe.dx = dx;
+  wall.style.translate = `${clamp(dx, -innerWidth / 3, innerWidth / 3)}px 0`;
+});
+function finishSwipe(event) {
+  if (!swipe || event.pointerId !== swipe.id) return;
+  const {dx, horizontal} = swipe;
+  swipe = null;
+  wall.style.translate = '';
+  if (event.type !== 'pointerup' || !horizontal || Math.abs(dx) < Math.min(70, innerWidth * .18)) return;
+  const next = clamp(page + (dx < 0 ? 1 : -1), 0, Math.ceil(galleryEntries.length / pageSize) - 1);
+  if (next === page) return;
+  page = next;
+  renderPage();
+  if (!reducedMotion.matches) wall.animate([{opacity: .3, translate: `${dx < 0 ? 24 : -24}px 0`}, {opacity: 1, translate: '0 0'}], {duration: 180, easing: 'ease-out'});
+}
+document.addEventListener('pointerup', finishSwipe);
+document.addEventListener('pointercancel', finishSwipe);
+document.body.addEventListener('lostpointercapture', event => { if (event.target === document.body) finishSwipe(event); });
+document.addEventListener('click', event => {
+  if (suppressTap && event.detail) { event.preventDefault(); event.stopPropagation(); }
+}, true);
 
 function renderJournal() {
   $('#entries').innerHTML = [...entries].sort((a,b) => b.date.localeCompare(a.date)).map(entry =>
@@ -379,8 +439,11 @@ $('#pages').addEventListener('click', event => {
   $('#pages [aria-current]').focus({preventScroll:true});
 });
 preview.addEventListener('pointerenter', () => clearTimeout(hideTimer));
-preview.addEventListener('pointerleave', scheduleHide);
+preview.addEventListener('pointerleave', event => { if (event.pointerType !== 'touch') scheduleHide(); });
 preview.addEventListener('focusout', scheduleHide);
+preview.addEventListener('click', event => {
+  if (compact.matches && !event.target.closest('a')) preview.querySelector('a')?.click();
+});
 preview.addEventListener('keydown', event => {
   if (event.key === 'Escape') {
     activeFrame?.focus();
@@ -426,6 +489,8 @@ reducedMotion.addEventListener('change', () => { if (!motionChosen) { paused = r
 compact.addEventListener('change', () => { page = 0; renderGallery(); });
 window.addEventListener('resize', () => {
   hidePreview();
+  swipe = null;
+  wall.style.translate = '';
   if (slots.length) { fitBoard(); draw(); }
 });
 window.addEventListener('hashchange', route);
